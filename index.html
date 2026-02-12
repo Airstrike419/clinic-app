@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dr. Saad Sabry Alzubaidy Clinic</title>
     <style>
-        :root { --primary: #004a99; --secondary: #eef4fb; --accent: #00cae3; --success: #28a745; }
+        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 50px; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .container { max-width: 1100px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
+        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
         
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
@@ -17,203 +17,185 @@
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        /* THE PATIENT LIST */
-        .pt-list-container { max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; background: white; }
+        /* Patient List */
+        .pt-list { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: white; }
         .pt-item:hover { background: var(--secondary); }
-        .pt-item.active { background: var(--secondary); border-left: 5px solid var(--primary); }
-        .pt-item strong { display: block; color: var(--primary); }
+        .pt-item.active { border-left: 5px solid var(--primary); background: var(--secondary); }
 
-        /* SECTIONS */
+        /* Imaging Gallery */
         .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .img-thumb { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+        
+        /* Fullscreen View */
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        #lightbox img { max-width: 95%; max-height: 95%; border: 2px solid white; }
     </style>
 </head>
 <body>
 
+<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg"></div>
+
 <header>
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Clinic | Patient Management System</div>
+    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Clinic | Patient Management</div>
 </header>
 
 <div class="container">
     <div class="sidebar">
         <div class="card">
-            <h3>1. Create Digital File</h3>
+            <h3>New Digital File</h3>
             <input type="text" id="newName" placeholder="Patient Name">
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button onclick="addPatient()">Create & Add to List</button>
+            <button onclick="addPatient()">Create & Open File</button>
         </div>
 
         <div class="card">
-            <h3>2. Patient Records</h3>
-            <input type="text" id="search" placeholder="Search names..." onkeyup="refreshList()">
-            <div id="patientList" class="pt-list-container">
-                </div>
+            <h3>Record Search</h3>
+            <input type="text" id="search" placeholder="Search patients..." onkeyup="refreshList()">
+            <div id="patientList" class="pt-list"></div>
         </div>
     </div>
 
     <div class="content">
         <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient from the record list to view or update their clinical data.</p>
+            <p>Select a patient record to start management.</p>
         </div>
 
         <div id="fileView" class="card" style="display:none;">
-            <div style="display:flex; justify-content:space-between;">
-                <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-                <span id="saveStatus" style="color:var(--success); font-size: 12px; font-weight: bold;"></span>
-            </div>
+            <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
             
             <div class="section" style="margin-top:20px;">
-                <span class="label">Clinical Presentation & History</span>
-                <textarea id="vPres" rows="2" oninput="autoSave()"></textarea>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                <div class="section">
-                    <span class="label">Imaging & Investigations</span>
-                    <textarea id="vInvs" placeholder="US, CT, MRI results..." rows="4" oninput="autoSave()"></textarea>
-                </div>
-                <div class="section">
-                    <span class="label">Management (Mx) & Plan</span>
-                    <textarea id="vMx" placeholder="Surgery plan or medications..." rows="4" oninput="autoSave()"></textarea>
-                </div>
+                <span class="label">Clinical Presentation</span>
+                <textarea id="vPres" rows="2"></textarea>
             </div>
 
             <div class="section">
-                <span class="label">Visit Timeline (Add details for each visit)</span>
-                <textarea id="vVisits" placeholder="Example: 15/02/2024 - Patient visited for follow-up. Wound clean..." rows="6" oninput="autoSave()"></textarea>
+                <span class="label">Imaging & Investigations (Photos/Scans)</span>
+                <textarea id="vInvs" placeholder="Write lab results here..." rows="2"></textarea>
+                <input type="file" id="cam" accept="image/*" multiple style="margin-top:10px" onchange="uploadImg(event)">
+                <div id="gallery" class="gallery"></div>
+            </div>
+
+            <div class="section">
+                <span class="label">Visit Timeline & Management</span>
+                <textarea id="vVisits" placeholder="Add notes for each follow-up visit..." rows="6"></textarea>
             </div>
 
             <div class="section" style="background:#fff0f3;">
                 <span class="label">Surgery & Reminders</span>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div>
-                        <small>Op Date</small>
-                        <input type="date" id="vOpDate" onchange="autoSave()">
-                    </div>
-                    <div>
-                        <small>Op Name</small>
-                        <input type="text" id="vOpDetail" oninput="autoSave()">
-                    </div>
+                    <input type="date" id="vOpDate">
+                    <input type="text" id="vOpDetail" placeholder="Operation Name">
                 </div>
             </div>
             
-            <button onclick="saveManual()" style="background:var(--success)">Confirm & Sync Changes</button>
+            <button onclick="saveAll()" style="background:var(--success)">Save All Updates</button>
+            <button onclick="deletePt()" style="background:none; color:var(--danger); font-size:12px; margin-top:20px;">Delete Patient Permanently</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Database Setup
-    let patients = JSON.parse(localStorage.getItem('saad_clinic_final')) || [];
+    let patients = JSON.parse(localStorage.getItem('saad_final_db')) || [];
     let activeIdx = null;
 
-    // --- FUNCTION 1: ADD PATIENT ---
     function addPatient() {
-        const name = document.getElementById('newName').value.trim();
-        const comp = document.getElementById('newComp').value.trim();
+        const name = document.getElementById('newName').value;
+        if(!name) return alert("Enter Name");
         
-        if(!name) return alert("Please enter the patient name");
-
-        const newPt = {
-            id: Date.now(),
-            name: name,
-            complaint: comp,
-            presentation: '',
-            investigations: '',
-            mx: '',
-            visits: '',
-            opDate: '',
-            opDetail: ''
-        };
-
-        patients.unshift(newPt); // Add to top of list
+        const pt = { id: Date.now(), name, complaint: document.getElementById('newComp').value, 
+                     presentation: '', investigations: '', visits: '', opDate: '', opDetail: '', images: [] };
+        
+        patients.unshift(pt);
         saveToStorage();
-        
-        // Clear inputs
         document.getElementById('newName').value = '';
         document.getElementById('newComp').value = '';
-        
-        refreshList(); // Show in list immediately
-        openFile(0);   // Open the file immediately
+        refreshList();
+        openFile(0);
     }
 
-    // --- FUNCTION 2: REFRESH THE LIST ---
     function refreshList() {
         const list = document.getElementById('patientList');
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        
+        const q = document.getElementById('search').value.toLowerCase();
         list.innerHTML = '';
         
-        const filtered = patients.filter(p => p.name.toLowerCase().includes(searchTerm));
-
-        if(filtered.length === 0) {
-            list.innerHTML = '<p style="padding:15px; color:#999; text-align:center;">No records found.</p>';
-            return;
-        }
-
-        filtered.forEach((p) => {
-            const realIndex = patients.indexOf(p);
+        patients.filter(p => p.name.toLowerCase().includes(q)).forEach(p => {
+            const idx = patients.indexOf(p);
             const item = document.createElement('div');
-            item.className = `pt-item ${activeIdx === realIndex ? 'active' : ''}`;
-            item.onclick = () => openFile(realIndex);
-            item.innerHTML = `<strong>${p.name}</strong><small>${p.complaint || 'No complaint'}</small>`;
+            item.className = `pt-item ${activeIdx === idx ? 'active' : ''}`;
+            item.onclick = () => openFile(idx);
+            item.innerHTML = `<strong>${p.name}</strong><small>${p.complaint || 'General'}</small>`;
             list.appendChild(item);
         });
     }
 
-    // --- FUNCTION 3: OPEN THE FILE ---
-    function openFile(index) {
-        activeIdx = index;
-        const p = patients[index];
-        
+    function openFile(idx) {
+        activeIdx = idx;
+        const p = patients[idx];
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('fileView').style.display = 'block';
-        
         document.getElementById('viewName').innerText = p.name;
-        document.getElementById('vPres').value = p.presentation || '';
-        document.getElementById('vInvs').value = p.investigations || '';
-        document.getElementById('vMx').value = p.mx || '';
-        document.getElementById('vVisits').value = p.visits || '';
-        document.getElementById('vOpDate').value = p.opDate || '';
-        document.getElementById('vOpDetail').value = p.opDetail || '';
-        
-        refreshList(); // Update "active" styling in sidebar
-    }
-
-    // --- FUNCTION 4: SAVE DATA ---
-    function saveManual() {
-        if(activeIdx === null) return;
-        
-        const p = patients[activeIdx];
-        p.presentation = document.getElementById('vPres').value;
-        p.investigations = document.getElementById('vInvs').value;
-        p.mx = document.getElementById('vMx').value;
-        p.visits = document.getElementById('vVisits').value;
-        p.opDate = document.getElementById('vOpDate').value;
-        p.opDetail = document.getElementById('vOpDetail').value;
-        
-        saveToStorage();
-        alert("Patient record updated successfully.");
+        document.getElementById('vPres').value = p.presentation;
+        document.getElementById('vInvs').value = p.investigations;
+        document.getElementById('vVisits').value = p.visits;
+        document.getElementById('vOpDate').value = p.opDate;
+        document.getElementById('vOpDetail').value = p.opDetail;
+        renderGallery(p.images);
         refreshList();
     }
 
-    function saveToStorage() {
-        localStorage.setItem('saad_clinic_final', JSON.stringify(patients));
+    function uploadImg(e) {
+        const files = e.target.files;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                patients[activeIdx].images.push(event.target.result);
+                renderGallery(patients[activeIdx].images);
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
-    // Auto-save visual feedback
-    function autoSave() {
-        document.getElementById('saveStatus').innerText = "Typing...";
-        setTimeout(() => {
-            document.getElementById('saveStatus').innerText = "Unsaved Changes";
-        }, 500);
+    function renderGallery(imgs) {
+        const g = document.getElementById('gallery');
+        g.innerHTML = '';
+        imgs.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'img-thumb';
+            img.onclick = () => {
+                document.getElementById('lbImg').src = src;
+                document.getElementById('lightbox').style.display = 'flex';
+            };
+            g.appendChild(img);
+        });
     }
 
-    // Initialize
+    function saveAll() {
+        const p = patients[activeIdx];
+        p.presentation = document.getElementById('vPres').value;
+        p.investigations = document.getElementById('vInvs').value;
+        p.visits = document.getElementById('vVisits').value;
+        p.opDate = document.getElementById('vOpDate').value;
+        p.opDetail = document.getElementById('vOpDetail').value;
+        saveToStorage();
+        alert("Saved to device.");
+    }
+
+    function saveToStorage() { localStorage.setItem('saad_final_db', JSON.stringify(patients)); }
+    
+    function deletePt() {
+        if(confirm("Delete this patient?")) {
+            patients.splice(activeIdx, 1);
+            saveToStorage();
+            location.reload();
+        }
+    }
+
     refreshList();
 </script>
-
 </body>
 </html>
