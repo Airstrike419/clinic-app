@@ -3,200 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Saad Sabry Alzubaidy - Surgical Dashboard</title>
+    <title>Dr. Saad Sabry Alzubaidy - Dashboard</title>
     <style>
-        :root { --primary: #004a99; --accent: #00cae3; --danger: #e91e63; --success: #4caf50; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; color: #333; }
-        header { background: var(--primary); color: white; padding: 15px 20px; text-align: center; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
-        
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h3 { border-left: 4px solid var(--primary); padding-left: 10px; color: var(--primary); margin-top: 0; }
-        
-        /* Form elements */
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        
-        /* Patient List */
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; position: relative; }
-        .pt-item:hover { background: #f8faff; }
-        .badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; color: white; margin-right: 5px; }
-        .op-badge { background: var(--danger); }
-        .fup-badge { background: var(--accent); }
-
-        /* Detail Sections */
-        .section-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eaeaea; }
-        .label { font-weight: bold; font-size: 12px; color: #666; text-transform: uppercase; }
-        
-        /* Reminders Panel */
-        .reminders { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; }
-        .rem-card { min-width: 200px; background: white; padding: 15px; border-radius: 10px; border-top: 4px solid var(--danger); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        :root { --primary: #004a99; --accent: #00cae3; --success: #4caf50; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7f9; margin: 0; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        .container { max-width: 1100px; margin: auto; padding: 15px; display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; border-left: 4px solid transparent; }
+        .pt-item:hover { background: #f0f4f8; border-left-color: var(--primary); }
+        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
+<div id="loader" class="loading-overlay"><strong>Updating Clinic Cloud...</strong></div>
+
 <header>
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Clinic | Baghdad, Hai Al-Jameaa</div>
+    <small>Baghdad, Hai Al-Jameaa | Surgical Clinic</small>
 </header>
 
 <div class="container">
     <div class="sidebar">
         <div class="card">
-            <h3>Register Patient</h3>
-            <input type="text" id="newName" placeholder="Patient Full Name">
-            <input type="text" id="newComplaint" placeholder="Chief Complaint">
-            <button onclick="saveToCloud()" id="saveBtn">Create Digital File</button>
+            <h3>Add New Patient</h3>
+            <input type="text" id="newName" placeholder="Full Name">
+            <input type="text" id="newComp" placeholder="Chief Complaint">
+            <button onclick="savePatient()">Create Digital File</button>
         </div>
-        
         <div class="card">
             <h3>Patient Records</h3>
-            <input type="text" onkeyup="filterList(this.value)" placeholder="Search by name...">
-            <div id="patientList" style="max-height: 500px; overflow-y: auto;">
-                <p style="text-align:center; color:#999;">Syncing with cloud...</p>
-            </div>
+            <div id="patientList">Loading...</div>
         </div>
     </div>
 
     <div class="content">
-        <div id="reminderSection" class="reminders"></div>
-
-        <div id="emptyState" class="card" style="text-align:center; padding: 100px 0;">
-            <p style="color:#999;">Select a patient to view investigations, surgical plans, and follow-ups.</p>
+        <div id="emptyState" class="card" style="text-align:center; padding: 80px 0; color: #999;">
+            Select a patient from the list to manage their clinical file.
         </div>
 
-        <div id="patientDetail" class="card" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 id="viewName" style="margin:0; color:var(--primary);">Patient Name</h2>
-                <div id="ptBadges"></div>
-            </div>
-
-            <div class="section-box">
-                <div class="label">Initial Presentation & History</div>
-                <textarea id="viewPresentation" rows="2"></textarea>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                <div class="section-box">
-                    <div class="label">Investigations (Imaging/Labs)</div>
-                    <textarea id="viewInvestigations" placeholder="US, CT, MRI, Biopsy results..." rows="4"></textarea>
-                </div>
-                <div class="section-box">
-                    <div class="label">Management (Mx) & Plan</div>
-                    <textarea id="viewMx" placeholder="Current treatment or surgical plan..." rows="4"></textarea>
-                </div>
-            </div>
-
-            <div class="section-box">
-                <div class="label">Visit Timeline & Progress Notes</div>
-                <textarea id="viewVisits" placeholder="Date: Note on this visit..." rows="5"></textarea>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; background:#fff5f7; padding:15px; border-radius:8px;">
+        <div id="detailView" class="card" style="display:none;">
+            <h2 id="viewName" style="color:var(--primary); margin-top:0;"></h2>
+            
+            <label><strong>Investigations (Imaging/Labs)</strong></label>
+            <textarea id="vInvs" rows="3"></textarea>
+            
+            <label><strong>Management (Mx) & Plan</strong></label>
+            <textarea id="vMx" rows="3"></textarea>
+            
+            <label><strong>Visit Timeline</strong></label>
+            <textarea id="vVisits" rows="5" placeholder="Add dates and progress notes..."></textarea>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#fff0f3; padding:15px; border-radius:8px;">
                 <div>
-                    <div class="label" style="color:var(--danger)">Operation Detail</div>
-                    <input type="date" id="viewOpDate">
-                    <input type="text" id="viewOpDetail" placeholder="Type of surgery">
+                    <strong>Operation Date</strong>
+                    <input type="date" id="vOpDate">
+                    <input type="text" id="vOpDetail" placeholder="Surgery name">
                 </div>
                 <div>
-                    <div class="label" style="color:var(--accent)">Next Follow-up</div>
-                    <input type="date" id="viewFollowUp">
+                    <strong>Follow-up</strong>
+                    <input type="date" id="vFollow">
                 </div>
             </div>
-
-            <button onclick="updateCloud()" style="background:var(--success); margin-top:20px;">Save All Patient Details</button>
+            <button onclick="updatePatient()" style="background:var(--success); margin-top:15px;">Save Updates</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. PASTE YOUR URL HERE
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxa82IJtJAOdrsBV2w8uLMoViK3k3xb9TDbTY_rrqxvpUJKMUYs_iu6TAy5HzfJYKPb/exec'; 
-    
+    // 1. PASTE YOUR NEW WEB APP URL HERE
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgW45WiGm072NJ2cLi9zLZJRkRrRIJ03i3E--oYZNp_j9japFAyIarpUC2q5S_gYAy/exec'; 
+
     let patients = [];
     let currentIdx = null;
 
     async function loadData() {
+        const listDiv = document.getElementById('patientList');
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
             patients = data.slice(1).map(r => ({
-                name: r[0], complaint: r[1], presentation: r[2],
-                investigations: r[3], visits: r[4], mx: r[5],
-                opDate: r[6], opDetail: r[7], followUp: r[8]
+                name: r[0], comp: r[1], pres: r[2], invs: r[3], visits: r[4], mx: r[5], opD: r[6], opT: r[7], fup: r[8]
             }));
             renderList();
-            renderReminders();
-        } catch(e) { console.log("Sync Error"); }
+        } catch(e) { listDiv.innerHTML = "Sync Error. Check URL."; }
     }
 
-    function renderList(listData = patients) {
+    function renderList() {
         const list = document.getElementById('patientList');
-        list.innerHTML = '';
-        listData.forEach((pt, i) => {
-            list.innerHTML += `
-                <div class="pt-item" onclick="showPatient(${i})">
-                    <strong>${pt.name}</strong><br>
-                    <small>${pt.complaint}</small>
-                    <div style="margin-top:5px;">
-                        ${pt.opDate ? '<span class="badge op-badge">Surgery</span>' : ''}
-                        ${pt.followUp ? '<span class="badge fup-badge">Follow-up</span>' : ''}
-                    </div>
-                </div>`;
+        list.innerHTML = patients.length ? '' : 'No records.';
+        patients.forEach((p, i) => {
+            list.innerHTML += `<div class="pt-item" onclick="showPt(${i})"><strong>${p.name}</strong><br><small>${p.comp}</small></div>`;
         });
     }
 
-    function renderReminders() {
-        const rem = document.getElementById('reminderSection');
-        rem.innerHTML = '';
-        const today = new Date().toISOString().split('T')[0];
-        
-        patients.filter(p => p.opDate === today).forEach(p => {
-            rem.innerHTML += `<div class="rem-card"><strong>Today's Surgery:</strong><br>${p.name}<br><small>${p.opDetail}</small></div>`;
-        });
-    }
-
-    function showPatient(i) {
+    function showPt(i) {
         currentIdx = i;
-        const pt = patients[i];
+        const p = patients[i];
         document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('patientDetail').style.display = 'block';
-        
-        document.getElementById('viewName').innerText = pt.name;
-        document.getElementById('viewPresentation').value = pt.presentation || '';
-        document.getElementById('viewInvestigations').value = pt.investigations || '';
-        document.getElementById('viewMx').value = pt.mx || '';
-        document.getElementById('viewVisits').value = pt.visits || '';
-        document.getElementById('viewOpDate').value = pt.opDate || '';
-        document.getElementById('viewOpDetail').value = pt.opDetail || '';
-        document.getElementById('viewFollowUp').value = pt.followUp || '';
+        document.getElementById('detailView').style.display = 'block';
+        document.getElementById('viewName').innerText = p.name;
+        document.getElementById('vInvs').value = p.invs || '';
+        document.getElementById('vMx').value = p.mx || '';
+        document.getElementById('vVisits').value = p.visits || '';
+        document.getElementById('vOpDate').value = p.opD || '';
+        document.getElementById('vOpDetail').value = p.opT || '';
+        document.getElementById('vFollow').value = p.fup || '';
     }
 
-    async function saveToCloud() {
+    async function savePatient() {
         const name = document.getElementById('newName').value;
-        if(!name) return alert("Enter Name");
-        const params = new URLSearchParams({ name: name, complaint: document.getElementById('newComplaint').value });
-        await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-        location.reload();
+        const comp = document.getElementById('newComp').value;
+        if(!name) return;
+        
+        document.getElementById('loader').style.display = 'flex';
+        // Using GET for saving to bypass GitHub security blocks
+        await fetch(`${SCRIPT_URL}?name=${encodeURIComponent(name)}&complaint=${encodeURIComponent(comp)}`);
+        location.reload(); 
     }
 
-    async function updateCloud() {
-        const pt = patients[currentIdx];
-        const params = new URLSearchParams({
-            name: pt.name,
-            complaint: pt.complaint,
-            presentation: document.getElementById('viewPresentation').value,
-            investigations: document.getElementById('viewInvestigations').value,
-            visits: document.getElementById('viewVisits').value,
-            mx: document.getElementById('viewMx').value,
-            opDate: document.getElementById('viewOpDate').value,
-            opDetail: document.getElementById('viewOpDetail').value,
-            followUp: document.getElementById('viewFollowUp').value
-        });
-        await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-        alert("Patient Record Updated Successfully");
+    async function updatePatient() {
+        document.getElementById('loader').style.display = 'flex';
+        const p = patients[currentIdx];
+        const url = `${SCRIPT_URL}?name=${encodeURIComponent(p.name)}&complaint=${encodeURIComponent(p.comp)}` +
+                    `&investigations=${encodeURIComponent(document.getElementById('vInvs').value)}` +
+                    `&visits=${encodeURIComponent(document.getElementById('vVisits').value)}` +
+                    `&mx=${encodeURIComponent(document.getElementById('vMx').value)}` +
+                    `&opDate=${encodeURIComponent(document.getElementById('vOpDate').value)}` +
+                    `&opDetail=${encodeURIComponent(document.getElementById('vOpDetail').value)}` +
+                    `&followUp=${encodeURIComponent(document.getElementById('vFollow').value)}`;
+        
+        await fetch(url);
+        alert("Patient Saved!");
+        document.getElementById('loader').style.display = 'none';
         loadData();
     }
 
