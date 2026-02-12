@@ -3,80 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - Clinic</title>
+    <title>Dr. Saad Sabry Alzubaidy - LIVE SYNC</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; --gray: #666; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 50px; color: #333; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
         .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
         @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
-        
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
-        
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        
-        /* Buttons */
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; margin-top: 10px; }
         .btn-media { background: #607d8b; color: white; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        
-        /* Patient List */
-        .pt-list { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; background: #fff; }
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: white; }
         .pt-item:hover { background: var(--secondary); }
         .pt-item.active { border-left: 5px solid var(--primary); background: var(--secondary); }
-
-        /* Media / Gallery */
         .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-        .label { font-weight: bold; font-size: 11px; color: var(--gray); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
         .img-thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
-        
-        /* Fullscreen View */
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        #lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .sync-status { font-size: 10px; color: var(--success); float: right; }
     </style>
 </head>
 <body>
 
-<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg"></div>
-
 <header>
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Clinic | Baghdad, Hai Al-Jameaa</div>
+    <div style="font-size: 0.8em; opacity: 0.9;">LIVE CLINIC SYNC | Baghdad</div>
 </header>
 
 <div class="container">
     <div class="sidebar">
         <div class="card">
-            <h3>New Digital Record</h3>
-            <input type="text" id="newName" placeholder="Patient Full Name">
+            <h3>New Patient</h3>
+            <input type="text" id="newName" placeholder="Full Name">
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button class="btn btn-primary" onclick="addPatient()">Create File</button>
+            <button class="btn btn-primary" onclick="addPatient()">Create Digital File</button>
         </div>
-
         <div class="card">
-            <h3>Clinic Records</h3>
-            <input type="text" id="search" placeholder="Search by name..." onkeyup="refreshList()">
-            <div id="patientList" class="pt-list"></div>
+            <h3>Patient Records <span class="sync-status" id="status">● Online</span></h3>
+            <input type="text" id="search" placeholder="Search names..." onkeyup="renderList()">
+            <div id="patientList" style="max-height: 400px; overflow-y: auto; border-radius: 8px; border: 1px solid #eee;"></div>
         </div>
     </div>
 
     <div class="content">
         <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient to view files and add investigations.</p>
+            <p>Select a patient record to start management.</p>
         </div>
 
         <div id="fileView" class="card" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-                <button onclick="deletePt()" style="background:none; color:var(--danger); border:none; font-size:12px; cursor:pointer;">Delete Record</button>
-            </div>
+            <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
             
             <div class="section" style="margin-top:20px;">
-                <span class="label">Clinical Presentation & Presentation</span>
+                <span class="label">Clinical Presentation</span>
                 <textarea id="vPres" rows="2"></textarea>
             </div>
 
@@ -85,7 +67,7 @@
                 <textarea id="vInvs" placeholder="Type Lab results here..." rows="2"></textarea>
                 
                 <button class="btn btn-media" onclick="document.getElementById('cam').click()">
-                    <span>📷</span> Add Photos / Scans / Files
+                    📷 Take Photo / Add Scans
                 </button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 
@@ -94,91 +76,137 @@
 
             <div class="section">
                 <span class="label">Detailed Visit Timeline</span>
-                <textarea id="vVisits" placeholder="Date: Details for each visit..." rows="6"></textarea>
+                <textarea id="vVisits" rows="5"></textarea>
             </div>
 
             <div class="section" style="background:#fff0f3;">
                 <span class="label" style="color:var(--danger)">Surgery Plan</span>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <input type="date" id="vOpDate">
-                    <input type="text" id="vOpDetail" placeholder="Operation Details">
+                    <input type="text" id="vOpDetail" placeholder="Operation name">
                 </div>
             </div>
             
-            <button class="btn btn-success" onclick="saveAll()">Save All Clinical Updates</button>
+            <button class="btn btn-primary" style="background:var(--success)" onclick="saveAll()">Save & Sync to All Devices</button>
         </div>
     </div>
 </div>
 
 <script>
-    let patients = JSON.parse(localStorage.getItem('saad_final_local_db')) || [];
-    let activeIdx = null;
+    // ==========================================
+    // STEP 1: PASTE YOUR FIREBASE CONFIG BELOW
+    // ==========================================
+    const firebaseConfig = {
+        // // Import the functions you need from the SDKs you need
+
+import { initializeApp } from "firebase/app";
+
+import { getAnalytics } from "firebase/analytics";
+
+// TODO: Add SDKs for Firebase products that you want to use
+
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+
+
+// Your web app's Firebase configuration
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBmQlAnDbaVeZOz1lZbRsH-NyJ7TgTfBPU",
+
+  authDomain: "saad-clinic.firebaseapp.com",
+
+  databaseURL: "https://saad-clinic-default-rtdb.firebaseio.com",
+
+  projectId: "saad-clinic",
+
+  storageBucket: "saad-clinic.firebasestorage.app",
+
+  messagingSenderId: "216860298716",
+
+  appId: "1:216860298716:web:6f2e31e3267f8d1487d319",
+
+  measurementId: "G-3DBY6CC5HD"
+
+};
+
+
+
+// Initialize Firebase
+
+const app = initializeApp(firebaseConfig);
+
+const analytics = getAnalytics(app);
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let patients = {};
+    let activeId = null;
+
+    // LIVE SYNC: Listen for changes from any device
+    db.ref('patients').on('value', (snapshot) => {
+        patients = snapshot.val() || {};
+        renderList();
+        if(activeId) openFile(activeId);
+        document.getElementById('status').innerText = "● Synced";
+    });
 
     function addPatient() {
         const name = document.getElementById('newName').value;
-        if(!name) return alert("Enter Patient Name");
-        
-        const pt = { 
-            id: Date.now(), 
-            name, 
-            complaint: document.getElementById('newComp').value, 
-            presentation: '', 
-            investigations: '', 
-            visits: '', 
-            opDate: '', 
-            opDetail: '', 
-            images: [] 
-        };
-        
-        patients.unshift(pt);
-        saveToStorage();
+        if(!name) return alert("Enter Name");
+        const newId = Date.now();
+        db.ref('patients/' + newId).set({
+            name, complaint: document.getElementById('newComp').value,
+            presentation: '', invs: '', visits: '', opD: '', opT: '', images: []
+        });
         document.getElementById('newName').value = '';
         document.getElementById('newComp').value = '';
-        refreshList();
-        openFile(0);
     }
 
-    function refreshList() {
+    function renderList() {
         const list = document.getElementById('patientList');
         const q = document.getElementById('search').value.toLowerCase();
         list.innerHTML = '';
-        
-        patients.filter(p => p.name.toLowerCase().includes(q)).forEach(p => {
-            const idx = patients.indexOf(p);
-            const item = document.createElement('div');
-            item.className = `pt-item ${activeIdx === idx ? 'active' : ''}`;
-            item.onclick = () => openFile(idx);
-            item.innerHTML = `<strong>${p.name}</strong><small>${p.complaint || 'General Visit'}</small>`;
-            list.appendChild(item);
+        Object.keys(patients).reverse().forEach(id => {
+            const p = patients[id];
+            if(p.name.toLowerCase().includes(q)) {
+                const item = document.createElement('div');
+                item.className = `pt-item ${activeId === id ? 'active' : ''}`;
+                item.onclick = () => openFile(id);
+                item.innerHTML = `<strong>${p.name}</strong><small>${p.complaint || ''}</small>`;
+                list.appendChild(item);
+            }
         });
     }
 
-    function openFile(idx) {
-        activeIdx = idx;
-        const p = patients[idx];
+    function openFile(id) {
+        activeId = id;
+        const p = patients[id];
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('fileView').style.display = 'block';
         document.getElementById('viewName').innerText = p.name;
         document.getElementById('vPres').value = p.presentation || '';
-        document.getElementById('vInvs').value = p.investigations || '';
+        document.getElementById('vInvs').value = p.invs || '';
         document.getElementById('vVisits').value = p.visits || '';
-        document.getElementById('vOpDate').value = p.opDate || '';
-        document.getElementById('vOpDetail').value = p.opDetail || '';
+        document.getElementById('vOpDate').value = p.opD || '';
+        document.getElementById('vOpDetail').value = p.opT || '';
         renderGallery(p.images || []);
-        refreshList();
     }
 
     function uploadImg(e) {
         const files = e.target.files;
-        if (!files.length) return;
-        
         for (let file of files) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                if(!patients[activeIdx].images) patients[activeIdx].images = [];
-                patients[activeIdx].images.push(event.target.result);
-                renderGallery(patients[activeIdx].images);
-                saveToStorage(); // Auto-save images
+                const imgs = patients[activeId].images || [];
+                imgs.push(event.target.result);
+                db.ref('patients/' + activeId + '/images').set(imgs);
             };
             reader.readAsDataURL(file);
         }
@@ -191,39 +219,21 @@
             const img = document.createElement('img');
             img.src = src;
             img.className = 'img-thumb';
-            img.onclick = () => {
-                document.getElementById('lbImg').src = src;
-                document.getElementById('lightbox').style.display = 'flex';
-            };
+            img.onclick = () => window.open(src);
             g.appendChild(img);
         });
     }
 
     function saveAll() {
-        if(activeIdx === null) return;
-        const p = patients[activeIdx];
-        p.presentation = document.getElementById('vPres').value;
-        p.investigations = document.getElementById('vInvs').value;
-        p.visits = document.getElementById('vVisits').value;
-        p.opDate = document.getElementById('vOpDate').value;
-        p.opDetail = document.getElementById('vOpDetail').value;
-        saveToStorage();
-        alert("Patient Record Updated!");
+        db.ref('patients/' + activeId).update({
+            presentation: document.getElementById('vPres').value,
+            invs: document.getElementById('vInvs').value,
+            visits: document.getElementById('vVisits').value,
+            opD: document.getElementById('vOpDate').value,
+            opT: document.getElementById('vOpDetail').value
+        });
+        alert("Synced Successfully!");
     }
-
-    function saveToStorage() { 
-        localStorage.setItem('saad_final_local_db', JSON.stringify(patients)); 
-    }
-    
-    function deletePt() {
-        if(confirm("Permanently delete this clinical file?")) {
-            patients.splice(activeIdx, 1);
-            saveToStorage();
-            location.reload();
-        }
-    }
-
-    refreshList();
 </script>
 </body>
 </html>
