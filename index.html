@@ -3,56 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - LIVE SYNC</title>
+    <title>Dr. Saad Sabry Alzubaidy - SECURE CLOUD</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: white; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 5px; }
+        
+        /* Login Screen */
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
+
+        /* Media & Sync */
+        .btn-media { background: #607d8b; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; }
+        .pt-list { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; }
         .pt-item:hover { background: var(--secondary); }
-        .pt-item.active { border-left: 5px solid var(--primary); background: var(--secondary); }
-        .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; }
+        .pt-item.active { background: var(--secondary); border-left: 5px solid var(--primary); }
+
+        .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
+        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
         .img-thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+        
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
-<div id="lightbox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; justify-content:center; align-items:center;" onclick="this.style.display='none'"><img id="lbImg" style="max-width:90%; max-height:90%;"></div>
+<div id="loginScreen">
+    <h1>Saad Sabry Clinic</h1>
+    <p>Please enter clinic access code:</p>
+    <input type="password" id="passCode" style="width: 250px; text-align: center;">
+    <button onclick="checkPass()" style="width: 250px; background: var(--success);">Login</button>
+</div>
+
+<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:95%; max-height:95%;"></div>
 
 <header>
+    <img src="image_0.png" alt="Dr. Saad Sabry Alzubaidy Logo" style="height: 80px; margin-bottom: 10px;">
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Clinic | LIVE CLOUD</div>
+    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
 </header>
 
-<div class="container">
+<div id="mainContent" class="container" style="display:none;">
     <div class="sidebar">
         <div class="card">
-            <h3>New Patient</h3>
+            <h3>Add Patient</h3>
             <input type="text" id="newName" placeholder="Full Name">
+            <input type="number" id="newAge" placeholder="Age">
+            <input type="tel" id="newPhone" placeholder="Phone Number">
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button class="btn" style="background:var(--primary); color:white;" onclick="addPatient()">Create Digital File</button>
+            <button onclick="addPatient()">Create Record</button>
         </div>
         <div class="card">
-            <h3>Patient Records</h3>
-            <input type="text" id="search" placeholder="Search names..." onkeyup="renderList()">
-            <div id="patientList" style="max-height: 400px; overflow-y: auto;"></div>
+            <h3>Clinic Records</h3>
+            <input type="text" id="search" placeholder="Search..." onkeyup="renderList()">
+            <div id="patientList" class="pt-list"></div>
         </div>
     </div>
 
     <div class="content">
         <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient to view files and update history.</p>
+            <p>Select a patient record to begin.</p>
         </div>
-
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
             <div class="section" style="margin-top:20px;">
@@ -61,26 +83,27 @@
             </div>
             <div class="section">
                 <span class="label">Imaging & Investigations</span>
-                <textarea id="vInvs" rows="2"></textarea>
-                <button class="btn" style="background:#607d8b; color:white; margin:10px 0;" onclick="document.getElementById('cam').click()">📷 Add Photo / Scan</button>
+                <textarea id="vInvs" placeholder="Lab results..." rows="2"></textarea>
+                <button class="btn-media" style="width:100%; padding:14px; border-radius:8px; border:none; color:white;" onclick="document.getElementById('cam').click()">📷 Take Photo / Scan</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
             <div class="section">
                 <span class="label">Visit Timeline</span>
-                <textarea id="vVisits" rows="5"></textarea>
+                <textarea id="vVisits" rows="6" placeholder="Add follow-up notes..."></textarea>
             </div>
             <div class="section" style="background:#fff0f3;">
-                <span class="label">Surgery Details</span>
+                <span class="label" style="color:var(--danger)">Surgery Plan</span>
                 <input type="date" id="vOpDate">
                 <input type="text" id="vOpDetail" placeholder="Operation name">
             </div>
-            <button class="btn" style="background:var(--success); color:white;" onclick="saveAll()">Sync Changes to Cloud</button>
+            <button onclick="saveAll()" style="background:var(--success)">Save All Updates</button>
         </div>
     </div>
 </div>
 
 <script>
+    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyBmQlAnDbaVeZOz1lZbRsH-NyJ7TgTfBPU",
         authDomain: "saad-clinic.firebaseapp.com",
@@ -97,25 +120,39 @@
     let patients = {};
     let activeId = null;
 
-    // Listen for changes
-    db.ref('patients').on('value', (snapshot) => {
-        patients = snapshot.val() || {};
-        renderList();
-        if(activeId) updateView(activeId);
-    });
+    // PASSWORD CHECK
+    function checkPass() {
+        const pass = document.getElementById('passCode').value;
+        if(pass === 'saad2026') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'grid';
+            initSync();
+        } else {
+            alert("Wrong access code.");
+        }
+    }
+
+    function initSync() {
+        db.ref('patients').on('value', (snapshot) => {
+            patients = snapshot.val() || {};
+            renderList();
+            if(activeId) updateView(activeId);
+        });
+    }
 
     function addPatient() {
         const name = document.getElementById('newName').value;
-        if(!name) return alert("Enter Name");
+        const age = document.getElementById('newAge').value;
+        const phone = document.getElementById('newPhone').value;
+        const comp = document.getElementById('newComp').value;
+
+        if(!name) return;
         const id = Date.now();
-        db.ref('patients/' + id).set({
-            name, complaint: document.getElementById('newComp').value,
-            presentation: '', invs: '', visits: '', opD: '', opT: '', images: []
-        }).then(() => {
-            document.getElementById('newName').value = '';
-            document.getElementById('newComp').value = '';
-            openFile(id);
-        });
+        db.ref('patients/' + id).set({ name, age, phone, complaint: comp, presentation: '', invs: '', visits: '', opD: '', opT: '', images: [] });
+        document.getElementById('newName').value = '';
+        document.getElementById('newAge').value = '';
+        document.getElementById('newPhone').value = '';
+        document.getElementById('newComp').value = '';
     }
 
     function renderList() {
@@ -144,7 +181,7 @@
 
     function updateView(id) {
         const p = patients[id];
-        document.getElementById('viewName').innerText = p.name;
+        document.getElementById('viewName').innerText = `${p.name} (Age: ${p.age || 'N/A'}, Phone: ${p.phone || 'N/A'})`;
         document.getElementById('vPres').value = p.presentation || '';
         document.getElementById('vInvs').value = p.invs || '';
         document.getElementById('vVisits').value = p.visits || '';
@@ -184,7 +221,7 @@
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
         });
-        alert("Synced!");
+        alert("Synced to all devices.");
     }
 </script>
 </body>
