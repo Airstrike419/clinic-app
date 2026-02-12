@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - SECURE CLOUD</title>
+    <title>Dr. Saad Sabry Alzubaidy - Surgical Clinic</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
@@ -11,114 +11,112 @@
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
         
         /* Fixed Header and Logo */
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .logo-img { height: 80px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; border: 2px solid white; }
+        header { background: var(--primary); color: white; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo-img { height: 70px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
         
-        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
         
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
         
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
-        /* Login Screen */
+        /* Login Shield */
         #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
 
-        /* Patient List with Protected Delete Area */
-        .pt-list { max-height: 500px; overflow-y: auto; padding: 5px; }
-        .pt-item { padding: 12px; border: 1px solid #eee; cursor: pointer; background: #fff; display: flex; align-items: center; border-radius: 10px; margin-bottom: 10px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .pt-item:hover { background: var(--secondary); border-color: var(--primary); }
-        .pt-item.active { border: 2px solid var(--primary); background: var(--secondary); }
+        /* Patient List with Small Discrete Delete Icon */
+        .pt-list { max-height: 500px; overflow-y: auto; }
+        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .pt-item:hover { background: var(--secondary); }
+        .pt-item.active { border-left: 5px solid var(--primary); background: var(--secondary); }
         .pt-info { flex: 1; min-width: 0; }
         .pt-info strong { font-size: 15px; color: var(--primary); }
-        .pt-info small { color: #666; font-size: 12px; }
         
-        /* The Red Delete Button */
-        .del-action { background: var(--danger); color: white; border: none; padding: 8px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; margin-left: 10px; min-width: 60px; text-align: center; }
-        .del-action:hover { opacity: 0.8; }
+        /* SMALL DELETE BUTTON */
+        .del-icon { background: var(--danger); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; flex-shrink: 0; opacity: 0.7; }
+        .del-icon:hover { opacity: 1; transform: scale(1.1); }
 
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
         
-        /* Fullscreen View */
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-        .img-thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; border: 3px solid #ddd; cursor: pointer; background: #fff; }
+        .img-thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; }
+        
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
-    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" style="height:120px; margin-bottom:20px; border-radius:50%; border:3px solid white;" onerror="this.style.display='none'">
     <h1>Saad Sabry Clinic</h1>
     <p>Access Code:</p>
     <input type="password" id="passCode" style="width: 250px; text-align: center;">
-    <button onclick="checkPass()" style="width: 250px; background: var(--success); margin-top: 10px;">ENTER CLINIC</button>
+    <button onclick="checkPass()" style="width: 250px; background: var(--success); margin-top: 10px;">Login</button>
 </div>
 
 <div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:98%; max-height:98%;"></div>
 
 <header>
-    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Saad Clinic Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
-    <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
+    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Clinic Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
+    <h2 style="margin:0; font-size: 1.2em;">Dr. Saad Sabry Alzubaidy</h2>
+    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Private Clinic | Baghdad</div>
 </header>
 
 <div id="mainContent" class="container" style="display:none;">
     <div class="sidebar">
         <div class="card">
-            <h3>Register Patient</h3>
+            <h3>New Patient Registration</h3>
             <input type="text" id="newName" placeholder="Full Name">
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                 <input type="number" id="newAge" placeholder="Age">
-                <input type="tel" id="newPhone" placeholder="Phone">
+                <input type="tel" id="newPhone" placeholder="Phone Number">
             </div>
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button onclick="addPatient()">Save to Cloud</button>
+            <button onclick="addPatient()">Save to Records</button>
         </div>
         <div class="card">
-            <h3>Clinic Records</h3>
-            <input type="text" id="search" placeholder="Search names..." onkeyup="renderList()">
+            <h3>Record History</h3>
+            <input type="text" id="search" placeholder="Quick Search..." onkeyup="renderList()">
             <div id="patientList" class="pt-list"></div>
         </div>
     </div>
 
     <div class="content">
         <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient record to view investigations and surgery plans.</p>
+            <p>Select a patient from the list to view surgical history and scans.</p>
         </div>
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-            <p id="viewContact" style="font-size: 1em; color: var(--primary); font-weight: bold; margin: 5px 0;"></p>
+            <p id="viewContact" style="font-size: 0.95em; color: var(--primary); font-weight: bold; margin: 8px 0;"></p>
             
-            <div class="section" style="margin-top:15px;">
+            <div class="section">
                 <span class="label">Clinical History</span>
                 <textarea id="vPres" rows="2"></textarea>
             </div>
             
             <div class="section">
-                <span class="label">Investigations (Scans/X-Rays)</span>
-                <textarea id="vInvs" placeholder="Type lab results..." rows="2"></textarea>
-                <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 CAPTURE SCAN PHOTO</button>
+                <span class="label">Investigations & Imaging Scans</span>
+                <textarea id="vInvs" placeholder="Write lab results here..." rows="2"></textarea>
+                <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO OF SCAN / X-RAY</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
 
             <div class="section">
-                <span class="label">Timeline & Progress</span>
-                <textarea id="vVisits" rows="5" placeholder="Add follow-up details..."></textarea>
+                <span class="label">Timeline & Progress Notes</span>
+                <textarea id="vVisits" rows="6" placeholder="Add follow-up notes here..."></textarea>
             </div>
 
             <div class="section" style="background:#fff0f3; border-color: #ffcdd2;">
-                <span class="label" style="color:var(--danger)">Surgical Management</span>
+                <span class="label" style="color:var(--danger)">Surgical Plan</span>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <input type="date" id="vOpDate">
-                    <input type="text" id="vOpDetail" placeholder="Operation name">
+                    <input type="text" id="vOpDetail" placeholder="Operation Details">
                 </div>
             </div>
-            <button onclick="saveAll()" style="background:var(--success)">SYNC ALL UPDATES</button>
+            <button onclick="saveAll()" style="background:var(--success)">SYNC CLINICAL DATA</button>
         </div>
     </div>
 </div>
@@ -145,7 +143,7 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
             initSync();
-        } else { alert("Incorrect Access Code"); }
+        } else { alert("Unauthorized Access"); }
     }
 
     function initSync() {
@@ -158,7 +156,7 @@
 
     function addPatient() {
         const name = document.getElementById('newName').value;
-        if(!name) return alert("Patient name required");
+        if(!name) return alert("Patient Name Required");
         const id = Date.now();
         db.ref('patients/' + id).set({
             name,
@@ -185,9 +183,9 @@
                 item.innerHTML = `
                     <div class="pt-info">
                         <strong>${p.name}</strong><br>
-                        <small>${p.complaint || 'General Checkup'}</small>
+                        <small>${p.complaint || 'Patient'}</small>
                     </div>
-                    <button class="del-action" onclick="deleteRec('${id}', event)">DELETE</button>
+                    <button class="del-icon" onclick="deleteRec('${id}', event)">🗑</button>
                 `;
                 list.appendChild(item);
             }
@@ -196,7 +194,7 @@
 
     function deleteRec(id, e) {
         e.stopPropagation();
-        if(confirm("Permanently delete this clinical record?")) {
+        if(confirm("Confirm: Delete this record permanently?")) {
             db.ref('patients/' + id).remove();
             if(activeId == id) {
                 activeId = null;
@@ -258,7 +256,7 @@
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
         });
-        alert("Patient Record Synced to Cloud!");
+        alert("Patient Record Synced Successfully");
     }
 </script>
 </body>
