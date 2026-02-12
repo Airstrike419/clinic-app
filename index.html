@@ -9,101 +9,113 @@
     <style>
         :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* Header with Logo */
+        header { background: var(--primary); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { height: 100px; width: auto; margin-bottom: 10px; border-radius: 50%; background: white; padding: 5px; }
+        
         .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
         
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 5px; }
-        
+
         /* Login Screen */
         #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
 
-        /* Media & Sync */
-        .btn-media { background: #607d8b; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; }
+        /* Patient List with Delete Button */
         .pt-list { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; }
+        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; }
         .pt-item:hover { background: var(--secondary); }
         .pt-item.active { background: var(--secondary); border-left: 5px solid var(--primary); }
+        .del-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: 10px; }
 
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
-        .img-thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
         
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
+        /* Gallery Fix */
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 10px; }
+        .img-thumb { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd; cursor: pointer; background: #eee; }
+        
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
     <h1>Saad Sabry Clinic</h1>
-    <p>Please enter clinic access code:</p>
+    <p>Clinic Access Code:</p>
     <input type="password" id="passCode" style="width: 250px; text-align: center;">
     <button onclick="checkPass()" style="width: 250px; background: var(--success);">Login</button>
 </div>
 
-<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:95%; max-height:95%;"></div>
+<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:98%; max-height:98%;"></div>
 
 <header>
-    <img src="image_0.png" alt="Dr. Saad Sabry Alzubaidy Logo" style="height: 80px; margin-bottom: 10px;">
+    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo" alt="Clinic Logo">
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.8em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
+    <div style="font-size: 0.8em; opacity: 0.9;">General Surgeon Private Clinic | Baghdad</div>
 </header>
 
 <div id="mainContent" class="container" style="display:none;">
     <div class="sidebar">
         <div class="card">
-            <h3>Add Patient</h3>
-            <input type="text" id="newName" placeholder="Full Name">
+            <h3>Add New Patient</h3>
+            <input type="text" id="newName" placeholder="Patient Full Name">
             <input type="number" id="newAge" placeholder="Age">
             <input type="tel" id="newPhone" placeholder="Phone Number">
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button onclick="addPatient()">Create Record</button>
+            <button onclick="addPatient()">Create Digital File</button>
         </div>
         <div class="card">
-            <h3>Clinic Records</h3>
-            <input type="text" id="search" placeholder="Search..." onkeyup="renderList()">
+            <h3>Patient Records</h3>
+            <input type="text" id="search" placeholder="Search names..." onkeyup="renderList()">
             <div id="patientList" class="pt-list"></div>
         </div>
     </div>
 
     <div class="content">
         <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient record to begin.</p>
+            <p>Select a patient record to view investigations and surgery plans.</p>
         </div>
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
+            <p id="viewContact" style="font-size: 0.9em; color: #666;"></p>
+            
             <div class="section" style="margin-top:20px;">
-                <span class="label">Clinical History</span>
+                <span class="label">Clinical History & Presentation</span>
                 <textarea id="vPres" rows="2"></textarea>
             </div>
+            
             <div class="section">
-                <span class="label">Imaging & Investigations</span>
-                <textarea id="vInvs" placeholder="Lab results..." rows="2"></textarea>
-                <button class="btn-media" style="width:100%; padding:14px; border-radius:8px; border:none; color:white;" onclick="document.getElementById('cam').click()">📷 Take Photo / Scan</button>
+                <span class="label">Investigations & Scans</span>
+                <textarea id="vInvs" placeholder="Type lab findings..." rows="2"></textarea>
+                <button style="background:#607d8b; color:white;" onclick="document.getElementById('cam').click()">📷 Take Photo of Scan/X-Ray</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
+
             <div class="section">
-                <span class="label">Visit Timeline</span>
-                <textarea id="vVisits" rows="6" placeholder="Add follow-up notes..."></textarea>
+                <span class="label">Visit Timeline & Management (Mx)</span>
+                <textarea id="vVisits" rows="6" placeholder="Add follow-up details..."></textarea>
             </div>
+
             <div class="section" style="background:#fff0f3;">
                 <span class="label" style="color:var(--danger)">Surgery Plan</span>
-                <input type="date" id="vOpDate">
-                <input type="text" id="vOpDetail" placeholder="Operation name">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <input type="date" id="vOpDate">
+                    <input type="text" id="vOpDetail" placeholder="Operation name">
+                </div>
             </div>
-            <button onclick="saveAll()" style="background:var(--success)">Save All Updates</button>
+            <button onclick="saveAll()" style="background:var(--success)">Sync Changes</button>
         </div>
     </div>
 </div>
 
 <script>
-    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyBmQlAnDbaVeZOz1lZbRsH-NyJ7TgTfBPU",
         authDomain: "saad-clinic.firebaseapp.com",
@@ -120,16 +132,12 @@
     let patients = {};
     let activeId = null;
 
-    // PASSWORD CHECK
     function checkPass() {
-        const pass = document.getElementById('passCode').value;
-        if(pass === 'saad2026') {
+        if(document.getElementById('passCode').value === 'saad2026') {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
             initSync();
-        } else {
-            alert("Wrong access code.");
-        }
+        } else { alert("Access Denied"); }
     }
 
     function initSync() {
@@ -142,17 +150,18 @@
 
     function addPatient() {
         const name = document.getElementById('newName').value;
-        const age = document.getElementById('newAge').value;
-        const phone = document.getElementById('newPhone').value;
-        const comp = document.getElementById('newComp').value;
-
-        if(!name) return;
+        if(!name) return alert("Enter Name");
         const id = Date.now();
-        db.ref('patients/' + id).set({ name, age, phone, complaint: comp, presentation: '', invs: '', visits: '', opD: '', opT: '', images: [] });
-        document.getElementById('newName').value = '';
-        document.getElementById('newAge').value = '';
-        document.getElementById('newPhone').value = '';
-        document.getElementById('newComp').value = '';
+        db.ref('patients/' + id).set({
+            name,
+            age: document.getElementById('newAge').value,
+            phone: document.getElementById('newPhone').value,
+            complaint: document.getElementById('newComp').value,
+            presentation: '', invs: '', visits: '', opD: '', opT: '', images: []
+        }).then(() => {
+            ["newName", "newAge", "newPhone", "newComp"].forEach(id => document.getElementById(id).value = '');
+            openFile(id);
+        });
     }
 
     function renderList() {
@@ -165,10 +174,23 @@
                 const item = document.createElement('div');
                 item.className = `pt-item ${activeId == id ? 'active' : ''}`;
                 item.onclick = () => openFile(id);
-                item.innerHTML = `<strong>${p.name}</strong><small>${p.complaint || ''}</small>`;
+                item.innerHTML = `<div><strong>${p.name}</strong><br><small>${p.complaint || ''}</small></div>
+                                  <button class="del-btn" onclick="deleteRec('${id}', event)">Delete</button>`;
                 list.appendChild(item);
             }
         });
+    }
+
+    function deleteRec(id, e) {
+        e.stopPropagation();
+        if(confirm("Permanently delete this record?")) {
+            db.ref('patients/' + id).remove();
+            if(activeId == id) {
+                activeId = null;
+                document.getElementById('fileView').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
     }
 
     function openFile(id) {
@@ -181,7 +203,8 @@
 
     function updateView(id) {
         const p = patients[id];
-        document.getElementById('viewName').innerText = `${p.name} (Age: ${p.age || 'N/A'}, Phone: ${p.phone || 'N/A'})`;
+        document.getElementById('viewName').innerText = p.name;
+        document.getElementById('viewContact').innerText = `Age: ${p.age || 'N/A'} | Phone: ${p.phone || 'N/A'}`;
         document.getElementById('vPres').value = p.presentation || '';
         document.getElementById('vInvs').value = p.invs || '';
         document.getElementById('vVisits').value = p.visits || '';
@@ -204,7 +227,8 @@
     }
 
     function renderGallery(imgs) {
-        const g = document.getElementById('gallery'); g.innerHTML = '';
+        const g = document.getElementById('gallery');
+        g.innerHTML = '';
         imgs.forEach(src => {
             const img = document.createElement('img');
             img.src = src; img.className = 'img-thumb';
@@ -221,7 +245,7 @@
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
         });
-        alert("Synced to all devices.");
+        alert("Synced Successfully");
     }
 </script>
 </body>
