@@ -10,9 +10,9 @@
         :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
         
-        /* Header with Logo */
-        header { background: var(--primary); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .logo { height: 100px; width: auto; margin-bottom: 10px; border-radius: 50%; background: white; padding: 5px; }
+        /* Fixed Header and Logo */
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo-img { height: 90px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
         
         .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
@@ -23,22 +23,22 @@
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 5px; }
 
-        /* Login Screen */
+        /* Login Shield */
         #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
 
-        /* Patient List with Delete Button */
-        .pt-list { max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
-        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+        /* Patient List with Prominent Delete Button */
+        .pt-list { max-height: 500px; overflow-y: auto; }
+        .pt-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .pt-item:hover { background: var(--secondary); }
-        .pt-item.active { background: var(--secondary); border-left: 5px solid var(--primary); }
-        .del-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: 10px; }
+        .pt-item.active { border-left: 6px solid var(--success); background: var(--secondary); }
+        .pt-info { flex-grow: 1; }
+        .del-record-btn { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; z-index: 10; font-size: 12px; }
 
+        /* Larger Gallery Layout */
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        
-        /* Gallery Fix */
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 10px; }
-        .img-thumb { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd; cursor: pointer; background: #eee; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+        .img-thumb { width: 100%; height: 150px; object-fit: contain; border-radius: 10px; border: 3px solid #ddd; cursor: pointer; background: #fff; }
         
         #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; }
     </style>
@@ -55,7 +55,7 @@
 <div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:98%; max-height:98%;"></div>
 
 <header>
-    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo" alt="Clinic Logo">
+    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Clinic Logo" onerror="this.src='https://via.placeholder.com/100?text=Clinic+Logo'">
     <h2 style="margin:0">Dr. Saad Sabry Alzubaidy</h2>
     <div style="font-size: 0.8em; opacity: 0.9;">General Surgeon Private Clinic | Baghdad</div>
 </header>
@@ -83,7 +83,7 @@
         </div>
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-            <p id="viewContact" style="font-size: 0.9em; color: #666;"></p>
+            <p id="viewContact" style="font-size: 1em; color: var(--primary); font-weight: bold;"></p>
             
             <div class="section" style="margin-top:20px;">
                 <span class="label">Clinical History & Presentation</span>
@@ -93,7 +93,7 @@
             <div class="section">
                 <span class="label">Investigations & Scans</span>
                 <textarea id="vInvs" placeholder="Type lab findings..." rows="2"></textarea>
-                <button style="background:#607d8b; color:white;" onclick="document.getElementById('cam').click()">📷 Take Photo of Scan/X-Ray</button>
+                <button style="background:#607d8b; color:white; padding:15px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO OF SCAN / X-RAY</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
@@ -110,7 +110,7 @@
                     <input type="text" id="vOpDetail" placeholder="Operation name">
                 </div>
             </div>
-            <button onclick="saveAll()" style="background:var(--success)">Sync Changes</button>
+            <button onclick="saveAll()" style="background:var(--success)">SYNC UPDATES TO CLOUD</button>
         </div>
     </div>
 </div>
@@ -174,8 +174,13 @@
                 const item = document.createElement('div');
                 item.className = `pt-item ${activeId == id ? 'active' : ''}`;
                 item.onclick = () => openFile(id);
-                item.innerHTML = `<div><strong>${p.name}</strong><br><small>${p.complaint || ''}</small></div>
-                                  <button class="del-btn" onclick="deleteRec('${id}', event)">Delete</button>`;
+                item.innerHTML = `
+                    <div class="pt-info">
+                        <strong>${p.name}</strong><br>
+                        <small>${p.complaint || ''}</small>
+                    </div>
+                    <button class="del-record-btn" onclick="deleteRec('${id}', event)">DELETE</button>
+                `;
                 list.appendChild(item);
             }
         });
@@ -183,7 +188,7 @@
 
     function deleteRec(id, e) {
         e.stopPropagation();
-        if(confirm("Permanently delete this record?")) {
+        if(confirm("Permanently delete this clinical record?")) {
             db.ref('patients/' + id).remove();
             if(activeId == id) {
                 activeId = null;
@@ -204,7 +209,7 @@
     function updateView(id) {
         const p = patients[id];
         document.getElementById('viewName').innerText = p.name;
-        document.getElementById('viewContact').innerText = `Age: ${p.age || 'N/A'} | Phone: ${p.phone || 'N/A'}`;
+        document.getElementById('viewContact').innerText = `AGE: ${p.age || '--'} | PHONE: ${p.phone || '--'}`;
         document.getElementById('vPres').value = p.presentation || '';
         document.getElementById('vInvs').value = p.invs || '';
         document.getElementById('vVisits').value = p.visits || '';
@@ -245,7 +250,7 @@
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
         });
-        alert("Synced Successfully");
+        alert("Patient Record Synced to Cloud!");
     }
 </script>
 </body>
