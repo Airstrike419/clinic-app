@@ -3,120 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - Surgical Clinic</title>
+    <title>Dr. Saad Sabry Alzubaidy - Surgical Suite</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
+        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; --warning: #ff9800; --call: #673ab7; }
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
-        
-        /* Fixed Header and Logo */
-        header { background: var(--primary); color: white; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo-img { height: 70px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
-        
-        .container { max-width: 1200px; margin: auto; padding: 15px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
-        
+        .container { max-width: 1400px; margin: auto; padding: 15px; display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
-        
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; display: flex; justify-content: space-between; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
-
-        /* Login Shield */
-        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
-
-        /* Patient List with Small Discrete Delete Icon */
-        .pt-list { max-height: 500px; overflow-y: auto; }
-        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .pt-item:hover { background: var(--secondary); }
-        .pt-item.active { border-left: 5px solid var(--primary); background: var(--secondary); }
-        .pt-info { flex: 1; min-width: 0; }
-        .pt-info strong { font-size: 15px; color: var(--primary); }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
         
-        /* SMALL DELETE BUTTON */
-        .del-icon { background: var(--danger); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; flex-shrink: 0; opacity: 0.7; }
-        .del-icon:hover { opacity: 1; transform: scale(1.1); }
+        /* Sidebar Item */
+        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; border-left: 4px solid transparent; }
+        .pt-item:hover { background: var(--secondary); }
+        .pt-item.active { border-left-color: var(--success); background: var(--secondary); }
+        .pt-meta { font-size: 10px; color: #888; }
+
+        /* Calendar Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { text-align: left; background: var(--secondary); padding: 10px; color: var(--primary); }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+
+        /* Call Center Dash */
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+        .call-item { background: #f3e5f5; border-left: 5px solid var(--call); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .call-meta { font-size: 11px; font-weight: bold; color: var(--call); margin-bottom: 5px; }
 
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
-        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        
+        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-        .img-thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; }
-        
-        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; }
+        .img-thumb { width: 100%; height: 130px; object-fit: contain; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; background: #fff; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen">
     <h1>Saad Sabry Clinic</h1>
-    <p>Access Code:</p>
-    <input type="password" id="passCode" style="width: 250px; text-align: center;">
+    <input type="password" id="passCode" placeholder="Access Code" style="width: 250px; text-align: center;">
     <button onclick="checkPass()" style="width: 250px; background: var(--success); margin-top: 10px;">Login</button>
 </div>
-
-<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" style="max-width:98%; max-height:98%;"></div>
 
 <header>
     <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Clinic Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
     <h2 style="margin:0; font-size: 1.2em;">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Private Clinic | Baghdad</div>
+    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
 </header>
 
 <div id="mainContent" class="container" style="display:none;">
     <div class="sidebar">
         <div class="card">
-            <h3>New Patient Registration</h3>
+            <h3>Register Patient</h3>
             <input type="text" id="newName" placeholder="Full Name">
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                 <input type="number" id="newAge" placeholder="Age">
-                <input type="tel" id="newPhone" placeholder="Phone Number">
+                <input type="tel" id="newPhone" placeholder="Phone">
             </div>
             <input type="text" id="newComp" placeholder="Chief Complaint">
-            <button onclick="addPatient()">Save to Records</button>
+            <button onclick="addPatient()">Add to Records</button>
         </div>
         <div class="card">
-            <h3>Record History</h3>
-            <input type="text" id="search" placeholder="Quick Search..." onkeyup="renderList()">
-            <div id="patientList" class="pt-list"></div>
+            <h3>Clinic History</h3>
+            <div id="patientList" style="max-height: 500px; overflow-y: auto;">Syncing...</div>
         </div>
     </div>
 
     <div class="content">
-        <div id="emptyState" class="card" style="text-align:center; padding: 100px 0; color: #999;">
-            <p>Select a patient from the list to view surgical history and scans.</p>
+        <div class="card">
+            <h3>📅 Weekly Operation Calendar <span style="font-size:12px; font-weight:normal;">(Next 7 Days)</span></h3>
+            <div id="opCalendar">No surgeries scheduled.</div>
         </div>
+
+        <div class="dash-grid">
+            <div class="card">
+                <h3>📞 Call Center Log</h3>
+                <input type="text" id="callPt" placeholder="Patient Name">
+                <input type="tel" id="callNum" placeholder="Phone Number">
+                <input type="text" id="callReason" placeholder="Reason (e.g. Needs Lab Review)">
+                <button onclick="addCall()" style="background:var(--call)">Log Call Request</button>
+                <div id="callList" style="margin-top:15px; max-height: 250px; overflow-y: auto;"></div>
+            </div>
+            <div class="card">
+                <h3>🔔 Reminders</h3>
+                <input type="text" id="remText" placeholder="General Reminder">
+                <input type="date" id="remDate">
+                <button onclick="addReminder()" style="background:var(--warning)">Set Reminder</button>
+                <div id="remList" style="margin-top:15px; max-height: 250px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div id="loadingMsg" style="display:none; text-align:center; padding: 20px; font-weight:bold;">Loading Profile...</div>
+        <div id="emptyState" class="card" style="text-align:center; padding: 60px 0; color: #999;"><p>Select a patient to manage their clinical file.</p></div>
+
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-            <p id="viewContact" style="font-size: 0.95em; color: var(--primary); font-weight: bold; margin: 8px 0;"></p>
-            
+            <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 8px 0;"></p>
+            <div class="section"><span class="label">Clinical History</span><textarea id="vPres" rows="2"></textarea></div>
             <div class="section">
-                <span class="label">Clinical History</span>
-                <textarea id="vPres" rows="2"></textarea>
-            </div>
-            
-            <div class="section">
-                <span class="label">Investigations & Imaging Scans</span>
-                <textarea id="vInvs" placeholder="Write lab results here..." rows="2"></textarea>
-                <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO OF SCAN / X-RAY</button>
+                <span class="label">Imaging & Scans</span>
+                <button style="background:#607d8b; color:white; padding:10px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="uploadImg(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
-
-            <div class="section">
-                <span class="label">Timeline & Progress Notes</span>
-                <textarea id="vVisits" rows="6" placeholder="Add follow-up notes here..."></textarea>
+            <div class="section"><span class="label">Timeline & Progress</span><textarea id="vVisits" rows="4"></textarea></div>
+            <div class="section" style="background:#fff0f3;"><span class="label" style="color:var(--danger)">Surgery Plan</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><input type="date" id="vOpDate"><input type="text" id="vOpDetail"></div>
             </div>
-
-            <div class="section" style="background:#fff0f3; border-color: #ffcdd2;">
-                <span class="label" style="color:var(--danger)">Surgical Plan</span>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <input type="date" id="vOpDate">
-                    <input type="text" id="vOpDetail" placeholder="Operation Details">
-                </div>
-            </div>
-            <button onclick="saveAll()" style="background:var(--success)">SYNC CLINICAL DATA</button>
+            <button onclick="saveAll()" style="background:var(--success)">SYNC ALL UPDATES</button>
         </div>
     </div>
 </div>
@@ -143,85 +142,134 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
             initSync();
-        } else { alert("Unauthorized Access"); }
+        } else { alert("Denied"); }
     }
 
     function initSync() {
-        db.ref('patients').on('value', (snapshot) => {
-            patients = snapshot.val() || {};
+        db.ref('patients').on('value', (snap) => {
+            patients = snap.val() || {};
             renderList();
-            if(activeId) updateView(activeId);
+            renderCalendar();
         });
+        db.ref('reminders').on('value', (snap) => renderRems(snap.val() || {}));
+        db.ref('calls').on('value', (snap) => renderCalls(snap.val() || {}));
     }
 
     function addPatient() {
         const name = document.getElementById('newName').value;
-        if(!name) return alert("Patient Name Required");
+        if(!name) return;
         const id = Date.now();
         db.ref('patients/' + id).set({
-            name,
-            age: document.getElementById('newAge').value,
+            name, age: document.getElementById('newAge').value,
             phone: document.getElementById('newPhone').value,
             complaint: document.getElementById('newComp').value,
-            presentation: '', invs: '', visits: '', opD: '', opT: '', images: []
+            dateAdded: new Date().toLocaleDateString('en-GB')
         }).then(() => {
             ["newName", "newAge", "newPhone", "newComp"].forEach(i => document.getElementById(i).value = '');
-            openFile(id);
         });
     }
 
     function renderList() {
         const list = document.getElementById('patientList');
-        const q = document.getElementById('search').value.toLowerCase();
         list.innerHTML = '';
         Object.keys(patients).reverse().forEach(id => {
             const p = patients[id];
-            if(p.name.toLowerCase().includes(q)) {
-                const item = document.createElement('div');
-                item.className = `pt-item ${activeId == id ? 'active' : ''}`;
-                item.onclick = () => openFile(id);
-                item.innerHTML = `
-                    <div class="pt-info">
-                        <strong>${p.name}</strong><br>
-                        <small>${p.complaint || 'Patient'}</small>
-                    </div>
-                    <button class="del-icon" onclick="deleteRec('${id}', event)">🗑</button>
-                `;
-                list.appendChild(item);
+            const item = document.createElement('div');
+            item.className = `pt-item ${activeId == id ? 'active' : ''}`;
+            item.onclick = () => loadPatient(id);
+            item.innerHTML = `
+                <div>
+                    <span class="pt-meta">${p.dateAdded || '--'}</span><br>
+                    <strong>${p.name}</strong><br><span class="pt-meta">Age: ${p.age || '--'}</span>
+                </div>
+                <button style="background:var(--danger); color:white; border:none; border-radius:4px; padding:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
+            list.appendChild(item);
+        });
+    }
+
+    function renderCalendar() {
+        const cal = document.getElementById('opCalendar');
+        const today = new Date();
+        const nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
+        
+        let html = '<table><tr><th>Date</th><th>Patient</th><th>Surgery</th></tr>';
+        let count = 0;
+
+        Object.keys(patients).forEach(id => {
+            const p = patients[id];
+            if(p.opD) {
+                const d = new Date(p.opD);
+                if(d >= today && d <= nextWeek) {
+                    html += `<tr><td>${p.opD}</td><td>${p.name}</td><td>${p.opT || 'General'}</td></tr>`;
+                    count++;
+                }
+            }
+        });
+        cal.innerHTML = count > 0 ? html + '</table>' : 'No surgeries scheduled for the next 7 days.';
+    }
+
+    function addCall() {
+        const pt = document.getElementById('callPt').value;
+        const num = document.getElementById('callNum').value;
+        const reason = document.getElementById('callReason').value;
+        if(!pt) return;
+        db.ref('calls').push({ pt, num, reason, status: 'pending' });
+        ["callPt", "callNum", "callReason"].forEach(i => document.getElementById(i).value = '');
+    }
+
+    function renderCalls(calls) {
+        const list = document.getElementById('callList'); list.innerHTML = '';
+        Object.keys(calls).forEach(id => {
+            if(calls[id].status === 'pending') {
+                list.innerHTML += `<div class="call-item">
+                    <div class="call-meta">CALL REQUEST</div>
+                    <strong>${calls[id].pt}</strong><br>
+                    <a href="tel:${calls[id].num}" style="color:var(--call); font-size:12px;">${calls[id].num}</a><br>
+                    <small>${calls[id].reason}</small><br>
+                    <button style="background:var(--success); border:none; color:white; margin-top:5px; padding:3px 8px; border-radius:4px;" onclick="db.ref('calls/${id}').update({status:'done'})">✓ Called</button>
+                </div>`;
             }
         });
     }
 
-    function deleteRec(id, e) {
-        e.stopPropagation();
-        if(confirm("Confirm: Delete this record permanently?")) {
-            db.ref('patients/' + id).remove();
-            if(activeId == id) {
-                activeId = null;
-                document.getElementById('fileView').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'block';
-            }
-        }
+    function addReminder() {
+        const text = document.getElementById('remText').value;
+        const date = document.getElementById('remDate').value;
+        if(!text) return;
+        db.ref('reminders').push({ text, date, status: 'pending' });
+        document.getElementById('remText').value = '';
     }
 
-    function openFile(id) {
+    function renderRems(rems) {
+        const list = document.getElementById('remList'); list.innerHTML = '';
+        Object.keys(rems).forEach(id => {
+            if(rems[id].status === 'pending') {
+                list.innerHTML += `<div style="background:#fff9c4; padding:10px; border-radius:8px; margin-bottom:8px; font-size:13px; border-left:4px solid var(--warning);">
+                    <strong>${rems[id].date || ''}</strong>: ${rems[id].text}
+                    <button style="float:right; background:none; color:var(--success); border:none; font-weight:bold;" onclick="db.ref('reminders/${id}').update({status:'done'})">DONE</button>
+                </div>`;
+            }
+        });
+    }
+
+    function loadPatient(id) {
         activeId = id;
         document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('fileView').style.display = 'block';
-        updateView(id);
-        renderList();
-    }
-
-    function updateView(id) {
-        const p = patients[id];
-        document.getElementById('viewName').innerText = p.name;
-        document.getElementById('viewContact').innerText = `AGE: ${p.age || '--'} | PHONE: ${p.phone || '--'}`;
-        document.getElementById('vPres').value = p.presentation || '';
-        document.getElementById('vInvs').value = p.invs || '';
-        document.getElementById('vVisits').value = p.visits || '';
-        document.getElementById('vOpDate').value = p.opD || '';
-        document.getElementById('vOpDetail').value = p.opT || '';
-        renderGallery(p.images || []);
+        document.getElementById('fileView').style.display = 'none';
+        document.getElementById('loadingMsg').style.display = 'block';
+        db.ref('patients/' + id).once('value').then(snap => {
+            const p = snap.val();
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('fileView').style.display = 'block';
+            document.getElementById('viewName').innerText = p.name;
+            document.getElementById('viewContact').innerText = `AGE: ${p.age || '--'} | PHONE: ${p.phone || '--'} | REGISTERED: ${p.dateAdded || '--'}`;
+            document.getElementById('vPres').value = p.presentation || '';
+            document.getElementById('vVisits').value = p.visits || '';
+            document.getElementById('vOpDate').value = p.opD || '';
+            document.getElementById('vOpDetail').value = p.opT || '';
+            renderGallery(p.images || []);
+            renderList();
+        });
     }
 
     function uploadImg(e) {
@@ -229,34 +277,35 @@
         for (let file of files) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                const imgs = patients[activeId].images || [];
-                imgs.push(event.target.result);
-                db.ref('patients/' + activeId + '/images').set(imgs);
+                db.ref('patients/' + activeId + '/images').once('value').then(snap => {
+                    const imgs = snap.val() || []; imgs.push(event.target.result);
+                    db.ref('patients/' + activeId + '/images').set(imgs).then(() => loadPatient(activeId));
+                });
             };
             reader.readAsDataURL(file);
         }
     }
 
     function renderGallery(imgs) {
-        const g = document.getElementById('gallery');
-        g.innerHTML = '';
+        const g = document.getElementById('gallery'); g.innerHTML = '';
         imgs.forEach(src => {
-            const img = document.createElement('img');
-            img.src = src; img.className = 'img-thumb';
-            img.onclick = () => { document.getElementById('lbImg').src = src; document.getElementById('lightbox').style.display = 'flex'; };
-            g.appendChild(img);
+            const img = document.createElement('img'); img.src = src; img.className = 'img-thumb';
+            img.onclick = () => window.open(src); g.appendChild(img);
         });
     }
 
     function saveAll() {
         db.ref('patients/' + activeId).update({
             presentation: document.getElementById('vPres').value,
-            invs: document.getElementById('vInvs').value,
             visits: document.getElementById('vVisits').value,
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
-        });
-        alert("Patient Record Synced Successfully");
+        }).then(() => alert("Synced"));
+    }
+
+    function deleteRec(id, e) {
+        e.stopPropagation();
+        if(confirm("Delete record?")) db.ref('patients/' + id).remove();
     }
 </script>
 </body>
