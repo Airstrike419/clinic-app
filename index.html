@@ -3,27 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - Compressed Clinic</title>
+    <title>Dr. Saad Sabry Alzubaidy - Surgical Suite INFINITY</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
+        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; --warning: #ff9800; --call: #673ab7; }
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .logo-img { height: 70px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
         .container { max-width: 1400px; margin: auto; padding: 15px; display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
         @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; display: flex; justify-content: space-between; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
-        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; }
-        .pt-item.active { border-left: 5px solid var(--success); background: var(--secondary); }
+        
+        /* Patient List Item */
+        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; border-left: 4px solid transparent; }
+        .pt-item:hover { background: var(--secondary); }
+        .pt-item.active { border-left-color: var(--success); background: var(--secondary); }
+        .pt-meta { font-size: 10px; color: #888; }
+
+        /* Calendar & Call Center Styles */
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; background: var(--secondary); padding: 8px; color: var(--primary); }
+        td { padding: 8px; border-bottom: 1px solid #eee; }
+
+        /* UI Helpers */
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-        .img-thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; }
+        .img-thumb { width: 100%; height: 130px; object-fit: contain; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; background: #fff; }
+        #loadingMsg { display:none; text-align:center; padding: 20px; font-weight:bold; color:var(--primary); }
+        #uploadingOverlay { display:none; color:var(--success); font-weight:bold; font-size:12px; margin-bottom:10px; }
     </style>
 </head>
 <body>
@@ -37,18 +52,19 @@
 <header>
     <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Clinic Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
     <h2 style="margin:0; font-size: 1.2em;">Dr. Saad Sabry Alzubaidy</h2>
-    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
+    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Private Clinic | Baghdad</div>
 </header>
 
 <div id="mainContent" class="container" style="display:none;">
     <div class="sidebar">
         <div class="card">
-            <h3>Add Patient</h3>
+            <h3>New Patient</h3>
             <input type="text" id="newName" placeholder="Full Name">
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                 <input type="number" id="newAge" placeholder="Age">
                 <input type="tel" id="newPhone" placeholder="Phone">
             </div>
+            <input type="text" id="newComp" placeholder="Chief Complaint">
             <button onclick="addPatient()">Add to History</button>
         </div>
         <div class="card">
@@ -58,24 +74,53 @@
     </div>
 
     <div class="content">
-        <div id="loadingMsg" style="display:none; text-align:center; padding: 20px; font-weight:bold;">Loading Clinical Record...</div>
-        <div id="emptyState" class="card" style="text-align:center; padding: 60px 0; color: #999;"><p>Select a patient to manage their file.</p></div>
+        <div class="card">
+            <h3>📅 Operation Calendar <span style="font-size:12px; font-weight:normal;">(7 Day Outlook)</span></h3>
+            <div id="opCalendar">No surgeries scheduled soon.</div>
+        </div>
+
+        <div class="dash-grid">
+            <div class="card">
+                <h3>📞 Call Center Log</h3>
+                <input type="text" id="callPt" placeholder="Patient Name">
+                <input type="tel" id="callNum" placeholder="Number">
+                <input type="text" id="callReason" placeholder="Reason">
+                <button onclick="addCall()" style="background:var(--call)">Log Call</button>
+                <div id="callList" style="margin-top:15px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            <div class="card">
+                <h3>🔔 Reminders</h3>
+                <input type="text" id="remText" placeholder="Reminder message">
+                <input type="date" id="remDate">
+                <button onclick="addReminder()" style="background:var(--warning)">Set Alert</button>
+                <div id="remList" style="margin-top:15px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div id="loadingMsg">Fetching Clinical Record...</div>
+        <div id="emptyState" class="card" style="text-align:center; padding: 60px 0; color: #999;"><p>Select a patient to begin diagnosis or plan surgery.</p></div>
 
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
             <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 8px 0;"></p>
-            <div class="section"><span class="label">Clinical History</span><textarea id="vPres" rows="3"></textarea></div>
+            
+            <div class="section"><span class="label">Clinical History</span><textarea id="vPres" rows="2"></textarea></div>
+            
             <div class="section">
-                <span class="label">Imaging (Auto-Compressed for Speed)</span>
+                <span class="label">Medical Imaging (Compressed)</span>
+                <div id="uploadingOverlay">Processing Image Scale...</div>
                 <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO</button>
-                <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="compressAndUpload(event)">
+                <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="processAndUpload(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
-            <div class="section" style="background:#fff0f3;"><span class="label" style="color:var(--danger)">Surgery Plan</span>
-                <input type="date" id="vOpDate">
-                <input type="text" id="vOpDetail" placeholder="Operation name">
+
+            <div class="section"><span class="label">Timeline & Management</span><textarea id="vVisits" rows="4"></textarea></div>
+            
+            <div class="section" style="background:#fff0f3;">
+                <span class="label" style="color:var(--danger)">Surgery Plan</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><input type="date" id="vOpDate"><input type="text" id="vOpDetail" placeholder="Procedure"></div>
             </div>
-            <button onclick="saveAll()" style="background:var(--success)">SYNC UPDATES</button>
+            <button onclick="saveAll()" style="background:var(--success)">SYNC CLINICAL UPDATES</button>
         </div>
     </div>
 </div>
@@ -94,7 +139,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let patients = {};
+    let patientsIndex = {};
     let activeId = null;
 
     function checkPass() {
@@ -102,14 +147,18 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'grid';
             initSync();
-        } else { alert("Denied"); }
+        } else { alert("Unauthorized"); }
     }
 
     function initSync() {
+        // Only load the lightweight list
         db.ref('patientIndex').on('value', (snap) => {
-            patients = snap.val() || {};
+            patientsIndex = snap.val() || {};
             renderList();
+            renderCalendar();
         });
+        db.ref('reminders').on('value', (snap) => renderRems(snap.val() || {}));
+        db.ref('calls').on('value', (snap) => renderCalls(snap.val() || {}));
     }
 
     function addPatient() {
@@ -117,47 +166,70 @@
         if(!name) return;
         const id = Date.now();
         const date = new Date().toLocaleDateString('en-GB');
-        db.ref('patientIndex/' + id).set({ name, age: document.getElementById('newAge').value, phone: document.getElementById('newPhone').value, dateAdded: date });
-        db.ref('patientDetails/' + id).set({ name, presentation: '', opD: '', opT: '', images: [] });
-        document.getElementById('newName').value = '';
+        db.ref('patientIndex/' + id).set({ name, age: document.getElementById('newAge').value, phone: document.getElementById('newPhone').value, complaint: document.getElementById('newComp').value, dateAdded: date });
+        db.ref('patientDetails/' + id).set({ name, presentation: '', visits: '', opD: '', opT: '', images: [] });
+        ["newName", "newAge", "newPhone", "newComp"].forEach(i => document.getElementById(i).value = '');
     }
 
     function renderList() {
-        const list = document.getElementById('patientList');
-        list.innerHTML = '';
-        Object.keys(patients).reverse().forEach(id => {
-            const p = patients[id];
+        const list = document.getElementById('patientList'); list.innerHTML = '';
+        Object.keys(patientsIndex).reverse().forEach(id => {
+            const p = patientsIndex[id];
             const item = document.createElement('div');
             item.className = `pt-item ${activeId == id ? 'active' : ''}`;
-            item.onclick = () => loadPatient(id);
-            item.innerHTML = `<div><strong>${p.name}</strong><br><small>${p.dateAdded || '--'}</small></div><button style="background:var(--danger); color:white; border:none; border-radius:4px; padding:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
+            item.onclick = () => loadFullData(id);
+            item.innerHTML = `<div><span class="pt-meta">${p.dateAdded || '--'}</span><br><strong>${p.name}</strong><br><small>Age: ${p.age || '--'}</small></div>
+                              <button style="background:var(--danger); color:white; border:none; padding:5px; border-radius:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
             list.appendChild(item);
         });
     }
 
-    function loadPatient(id) {
+    function renderCalendar() {
+        const cal = document.getElementById('opCalendar');
+        const today = new Date(); const nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
+        let html = '<table><tr><th>Date</th><th>Patient</th><th>Surgery</th></tr>';
+        let count = 0;
+        Object.keys(patientsIndex).forEach(id => {
+            db.ref('patientDetails/' + id).once('value').then(snap => {
+                const d = snap.val();
+                if(d && d.opD) {
+                    const opDate = new Date(d.opD);
+                    if(opDate >= today && opDate <= nextWeek) {
+                        html += `<tr><td>${d.opD}</td><td>${patientsIndex[id].name}</td><td>${d.opT || 'Procedure'}</td></tr>`;
+                        count++;
+                        cal.innerHTML = html + '</table>';
+                    }
+                }
+            });
+        });
+    }
+
+    function loadFullData(id) {
         activeId = id;
+        const base = patientsIndex[id];
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('fileView').style.display = 'none';
         document.getElementById('loadingMsg').style.display = 'block';
 
         db.ref('patientDetails/' + id).once('value').then(snap => {
-            const d = snap.val();
+            const details = snap.val();
             document.getElementById('loadingMsg').style.display = 'none';
             document.getElementById('fileView').style.display = 'block';
-            document.getElementById('viewName').innerText = patients[id].name;
-            document.getElementById('viewContact').innerText = `AGE: ${patients[id].age || '--'} | PHONE: ${patients[id].phone || '--'}`;
-            document.getElementById('vPres').value = d.presentation || '';
-            document.getElementById('vOpDate').value = d.opD || '';
-            document.getElementById('vOpDetail').value = d.opT || '';
-            renderGallery(d.images || []);
+            document.getElementById('viewName').innerText = base.name;
+            document.getElementById('viewContact').innerText = `AGE: ${base.age || '--'} | PHONE: ${base.phone || '--'} | REGISTERED: ${base.dateAdded || '--'}`;
+            document.getElementById('vPres').value = details.presentation || '';
+            document.getElementById('vVisits').value = details.visits || '';
+            document.getElementById('vOpDate').value = details.opD || '';
+            document.getElementById('vOpDetail').value = details.opT || '';
+            renderGallery(details.images || []);
             renderList();
         });
     }
 
-    // THE "DIGITAL SCALPEL": Compresses photos to keep the database light
-    function compressAndUpload(e) {
+    // THE "DIGITAL SCALPEL" COMPRESSION ENGINE
+    function processAndUpload(e) {
         const files = e.target.files;
+        document.getElementById('uploadingOverlay').style.display = 'block';
         for (let file of files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -166,27 +238,22 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Clinical quality but small size
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
+                    const MAX_WIDTH = 1000; // Optimal medical quality
+                    let width = img.width; let height = img.height;
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+                    else { if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; } }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Compress to 60% quality (Perfect balance for clinical scans)
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Shrinks size by 90%
                     
                     db.ref('patientDetails/' + activeId + '/images').once('value').then(snap => {
                         const imgs = snap.val() || [];
                         imgs.push(dataUrl);
-                        db.ref('patientDetails/' + activeId + '/images').set(imgs).then(() => loadPatient(activeId));
+                        db.ref('patientDetails/' + activeId + '/images').set(imgs).then(() => {
+                            document.getElementById('uploadingOverlay').style.display = 'none';
+                            loadFullData(activeId);
+                        });
                     });
                 };
             };
@@ -196,16 +263,55 @@
     function renderGallery(imgs) {
         const g = document.getElementById('gallery'); g.innerHTML = '';
         imgs.forEach(src => {
-            const img = document.createElement('img');
-            img.src = src; img.className = 'img-thumb';
-            img.onclick = () => window.open(src);
-            g.appendChild(img);
+            const img = document.createElement('img'); img.src = src; img.className = 'img-thumb';
+            img.onclick = () => window.open(src); g.appendChild(img);
+        });
+    }
+
+    function addCall() {
+        const pt = document.getElementById('callPt').value;
+        const num = document.getElementById('callNum').value;
+        const reason = document.getElementById('callReason').value;
+        if(!pt) return;
+        db.ref('calls').push({ pt, num, reason, status: 'pending' });
+        ["callPt", "callNum", "callReason"].forEach(i => document.getElementById(i).value = '');
+    }
+
+    function renderCalls(calls) {
+        const list = document.getElementById('callList'); list.innerHTML = '';
+        Object.keys(calls).forEach(id => {
+            if(calls[id].status === 'pending') {
+                list.innerHTML += `<div style="background:#f3e5f5; padding:10px; border-radius:8px; margin-bottom:8px; border-left:4px solid var(--call);">
+                    <strong>${calls[id].pt}</strong>: <a href="tel:${calls[id].num}">${calls[id].num}</a><br><small>${calls[id].reason}</small>
+                    <button style="float:right; background:var(--success); color:white; border:none; border-radius:4px; padding:2px 5px;" onclick="db.ref('calls/${id}').update({status:'done'})">DONE</button>
+                </div>`;
+            }
+        });
+    }
+
+    function addReminder() {
+        const text = document.getElementById('remText').value; const date = document.getElementById('remDate').value;
+        if(!text) return;
+        db.ref('reminders').push({ text, date, status: 'pending' });
+        document.getElementById('remText').value = '';
+    }
+
+    function renderRems(rems) {
+        const list = document.getElementById('remList'); list.innerHTML = '';
+        Object.keys(rems).forEach(id => {
+            if(rems[id].status === 'pending') {
+                list.innerHTML += `<div style="background:#fff9c4; padding:10px; border-radius:8px; margin-bottom:8px; border-left:4px solid var(--warning);">
+                    <strong>${rems[id].date || ''}</strong>: ${rems[id].text}
+                    <button style="float:right; background:var(--success); color:white; border:none; border-radius:4px; padding:2px 5px;" onclick="db.ref('reminders/${id}').update({status:'done'})">✓</button>
+                </div>`;
+            }
         });
     }
 
     function saveAll() {
         db.ref('patientDetails/' + activeId).update({
             presentation: document.getElementById('vPres').value,
+            visits: document.getElementById('vVisits').value,
             opD: document.getElementById('vOpDate').value,
             opT: document.getElementById('vOpDetail').value
         }).then(() => alert("Synced"));
@@ -213,7 +319,7 @@
 
     function deleteRec(id, e) {
         e.stopPropagation();
-        if(confirm("Delete record?")) {
+        if(confirm("Delete patient record?")) {
             db.ref('patientIndex/' + id).remove();
             db.ref('patientDetails/' + id).remove();
         }
