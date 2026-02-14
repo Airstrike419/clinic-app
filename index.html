@@ -1,30 +1,223 @@
 <!DOCTYPE html>
-<html>
-<body>
-    <h1>DR. SAAD CLINIC - EMERGENCY DATABASE FLUSH</h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dr. Saad Sabry Alzubaidy - Compressed Clinic</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmQlAnDbaVeZOz1lZbRsH-NyJ7TgTfBPU",
-            authDomain: "saad-clinic.firebaseapp.com",
-            databaseURL: "https://saad-clinic-default-rtdb.firebaseio.com",
-            projectId: "saad-clinic",
-            storageBucket: "saad-clinic.firebasestorage.app",
-            messagingSenderId: "216860298716",
-            appId: "1:216860298716:web:6f2e31e3267f8d1487d319",
-            measurementId: "G-3DBY6CC5HD"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <style>
+        :root { --primary: #004a99; --secondary: #eef4fb; --success: #28a745; --danger: #dc3545; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo-img { height: 70px; width: auto; background: white; border-radius: 50%; padding: 5px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
+        .container { max-width: 1400px; margin: auto; padding: 15px; display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; }
+        .pt-item.active { border-left: 5px solid var(--success); background: var(--secondary); }
+        .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
+        .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
+        .img-thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; }
+    </style>
+</head>
+<body>
 
-        // THIS IS THE LINE THAT CLEARS THE 1GB CLOG
-        db.ref().remove().then(() => {
-            alert("SUCCESS: Database is now empty and fast! You can now put the real code back.");
-            document.body.innerHTML = "<h1>DATABASE CLEARED. Ready for new code.</h1>";
-        }).catch((error) => {
-            alert("Error: " + error.message);
+<div id="loginScreen">
+    <h1>Saad Sabry Clinic</h1>
+    <input type="password" id="passCode" placeholder="Access Code" style="width: 250px; text-align: center;">
+    <button onclick="checkPass()" style="width: 250px; background: var(--success); margin-top: 10px;">Login</button>
+</div>
+
+<header>
+    <img src="Gemini_Generated_Image_cit3qacit3qacit3.jpg" class="logo-img" alt="Clinic Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
+    <h2 style="margin:0; font-size: 1.2em;">Dr. Saad Sabry Alzubaidy</h2>
+    <div style="font-size: 0.7em; opacity: 0.9;">Surgical Specialist Clinic | Baghdad</div>
+</header>
+
+<div id="mainContent" class="container" style="display:none;">
+    <div class="sidebar">
+        <div class="card">
+            <h3>Add Patient</h3>
+            <input type="text" id="newName" placeholder="Full Name">
+            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
+                <input type="number" id="newAge" placeholder="Age">
+                <input type="tel" id="newPhone" placeholder="Phone">
+            </div>
+            <button onclick="addPatient()">Add to History</button>
+        </div>
+        <div class="card">
+            <h3>Clinic History</h3>
+            <div id="patientList" style="max-height: 500px; overflow-y: auto;">Syncing...</div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="loadingMsg" style="display:none; text-align:center; padding: 20px; font-weight:bold;">Loading Clinical Record...</div>
+        <div id="emptyState" class="card" style="text-align:center; padding: 60px 0; color: #999;"><p>Select a patient to manage their file.</p></div>
+
+        <div id="fileView" class="card" style="display:none;">
+            <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
+            <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 8px 0;"></p>
+            <div class="section"><span class="label">Clinical History</span><textarea id="vPres" rows="3"></textarea></div>
+            <div class="section">
+                <span class="label">Imaging (Auto-Compressed for Speed)</span>
+                <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO</button>
+                <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="compressAndUpload(event)">
+                <div id="gallery" class="gallery"></div>
+            </div>
+            <div class="section" style="background:#fff0f3;"><span class="label" style="color:var(--danger)">Surgery Plan</span>
+                <input type="date" id="vOpDate">
+                <input type="text" id="vOpDetail" placeholder="Operation name">
+            </div>
+            <button onclick="saveAll()" style="background:var(--success)">SYNC UPDATES</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBmQlAnDbaVeZOz1lZbRsH-NyJ7TgTfBPU",
+        authDomain: "saad-clinic.firebaseapp.com",
+        databaseURL: "https://saad-clinic-default-rtdb.firebaseio.com",
+        projectId: "saad-clinic",
+        storageBucket: "saad-clinic.firebasestorage.app",
+        messagingSenderId: "216860298716",
+        appId: "1:216860298716:web:6f2e31e3267f8d1487d319",
+        measurementId: "G-3DBY6CC5HD"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let patients = {};
+    let activeId = null;
+
+    function checkPass() {
+        if(document.getElementById('passCode').value === 'saad2026') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'grid';
+            initSync();
+        } else { alert("Denied"); }
+    }
+
+    function initSync() {
+        db.ref('patientIndex').on('value', (snap) => {
+            patients = snap.val() || {};
+            renderList();
         });
-    </script>
+    }
+
+    function addPatient() {
+        const name = document.getElementById('newName').value;
+        if(!name) return;
+        const id = Date.now();
+        const date = new Date().toLocaleDateString('en-GB');
+        db.ref('patientIndex/' + id).set({ name, age: document.getElementById('newAge').value, phone: document.getElementById('newPhone').value, dateAdded: date });
+        db.ref('patientDetails/' + id).set({ name, presentation: '', opD: '', opT: '', images: [] });
+        document.getElementById('newName').value = '';
+    }
+
+    function renderList() {
+        const list = document.getElementById('patientList');
+        list.innerHTML = '';
+        Object.keys(patients).reverse().forEach(id => {
+            const p = patients[id];
+            const item = document.createElement('div');
+            item.className = `pt-item ${activeId == id ? 'active' : ''}`;
+            item.onclick = () => loadPatient(id);
+            item.innerHTML = `<div><strong>${p.name}</strong><br><small>${p.dateAdded || '--'}</small></div><button style="background:var(--danger); color:white; border:none; border-radius:4px; padding:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
+            list.appendChild(item);
+        });
+    }
+
+    function loadPatient(id) {
+        activeId = id;
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('fileView').style.display = 'none';
+        document.getElementById('loadingMsg').style.display = 'block';
+
+        db.ref('patientDetails/' + id).once('value').then(snap => {
+            const d = snap.val();
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('fileView').style.display = 'block';
+            document.getElementById('viewName').innerText = patients[id].name;
+            document.getElementById('viewContact').innerText = `AGE: ${patients[id].age || '--'} | PHONE: ${patients[id].phone || '--'}`;
+            document.getElementById('vPres').value = d.presentation || '';
+            document.getElementById('vOpDate').value = d.opD || '';
+            document.getElementById('vOpDetail').value = d.opT || '';
+            renderGallery(d.images || []);
+            renderList();
+        });
+    }
+
+    // THE "DIGITAL SCALPEL": Compresses photos to keep the database light
+    function compressAndUpload(e) {
+        const files = e.target.files;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // Clinical quality but small size
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to 60% quality (Perfect balance for clinical scans)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    db.ref('patientDetails/' + activeId + '/images').once('value').then(snap => {
+                        const imgs = snap.val() || [];
+                        imgs.push(dataUrl);
+                        db.ref('patientDetails/' + activeId + '/images').set(imgs).then(() => loadPatient(activeId));
+                    });
+                };
+            };
+        }
+    }
+
+    function renderGallery(imgs) {
+        const g = document.getElementById('gallery'); g.innerHTML = '';
+        imgs.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src; img.className = 'img-thumb';
+            img.onclick = () => window.open(src);
+            g.appendChild(img);
+        });
+    }
+
+    function saveAll() {
+        db.ref('patientDetails/' + activeId).update({
+            presentation: document.getElementById('vPres').value,
+            opD: document.getElementById('vOpDate').value,
+            opT: document.getElementById('vOpDetail').value
+        }).then(() => alert("Synced"));
+    }
+
+    function deleteRec(id, e) {
+        e.stopPropagation();
+        if(confirm("Delete record?")) {
+            db.ref('patientIndex/' + id).remove();
+            db.ref('patientDetails/' + id).remove();
+        }
+    }
+</script>
 </body>
 </html>
