@@ -86,8 +86,8 @@
             
             <div id="visitInfo" style="background: var(--secondary); padding: 12px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                    <span class="label">Patient Info</span>
-                    <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 0;"></p>
+                    <span class="label">Patient Profile Details</span>
+                    <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 0; line-height: 1.4;"></p>
                 </div>
                 <div>
                     <span class="label">Visit History (Scroll)</span>
@@ -200,9 +200,14 @@
             document.getElementById('loadingMsg').style.display = 'none';
             document.getElementById('fileView').style.display = 'block';
             document.getElementById('viewName').innerText = patientsIndex[id].name;
-            document.getElementById('viewContact').innerText = `AGE: ${patientsIndex[id].age || '--'} | PHONE: ${patientsIndex[id].phone || '--'}`;
             
-            // Render Visit Log
+            // Re-added Registration Date here
+            document.getElementById('viewContact').innerHTML = `
+                AGE: ${patientsIndex[id].age || '--'}<br>
+                PHONE: ${patientsIndex[id].phone || '--'}<br>
+                REGISTERED ON: ${patientsIndex[id].dateAdded || '--'}
+            `;
+            
             const log = document.getElementById('visitHistoryLog');
             log.innerHTML = '';
             const dates = details.visitDates || [];
@@ -273,7 +278,7 @@
                 opT: document.getElementById('vOpDetail').value,
                 visitDates: dates
             }).then(() => {
-                alert("Synced Successfully");
+                alert("Synced Successfully - Visit Logged");
                 loadFullData(activeId);
             });
         });
