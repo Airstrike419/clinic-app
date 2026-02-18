@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dr. Saad Sabry Alzubaidy - Surgical Suite INFINITY</title>
+    <title>Dr. Saad Sabry Alzubaidy - Surgical Suite MASTER</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <style>
@@ -17,25 +17,26 @@
         h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.1em; display: flex; justify-content: space-between; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         
-        /* Auto-enlarge textarea styling */
         textarea { resize: none; overflow-y: auto; min-height: 80px; transition: height 0.2s; }
-        
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
         
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
         .pt-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; border-left: 4px solid transparent; }
-        .pt-item:hover { background: var(--secondary); }
         .pt-item.active { border-left-color: var(--success); background: var(--secondary); }
         .pt-meta { font-size: 10px; color: #888; }
+        
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+        th { text-align: left; background: var(--secondary); padding: 8px; color: var(--primary); }
+        td { padding: 8px; border-bottom: 1px solid #eee; }
 
         .section { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
         .label { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; display: block; margin-bottom: 5px; }
         
-        /* Visit History Log Styling */
         .visit-log { max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 5px; margin-top: 5px; }
         .visit-date { font-size: 0.85em; padding: 3px 8px; border-bottom: 1px solid #f0f0f0; color: #555; }
-        .visit-date:last-child { border-bottom: none; }
-
+        
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
         .img-thumb { width: 100%; height: 130px; object-fit: contain; border-radius: 10px; border: 2px solid #ddd; cursor: pointer; background: #fff; }
         #loadingMsg { display:none; text-align:center; padding: 20px; font-weight:bold; color:var(--primary); }
@@ -78,40 +79,51 @@
     </div>
 
     <div class="content">
+        <div class="card">
+            <h3>📅 Operation Calendar (30 Day Outlook)</h3>
+            <div id="opCalendar">No surgeries scheduled soon.</div>
+        </div>
+
+        <div class="dash-grid">
+            <div class="card">
+                <h3>📞 Call Center Log</h3>
+                <input type="text" id="callPt" placeholder="Name">
+                <input type="tel" id="callNum" placeholder="Phone">
+                <input type="text" id="callReason" placeholder="Reason">
+                <button onclick="addCall()" style="background:var(--call)">Log Call</button>
+                <div id="callList" style="margin-top:10px;"></div>
+            </div>
+            <div class="card">
+                <h3>🔔 Reminders</h3>
+                <input type="text" id="remText" placeholder="Reminder">
+                <input type="date" id="remDate">
+                <button onclick="addReminder()" style="background:var(--warning)">Set Alert</button>
+                <div id="remList" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
         <div id="loadingMsg">Fetching Clinical Record...</div>
-        <div id="emptyState" class="card" style="text-align:center; padding: 60px 0; color: #999;"><p>Select a patient to begin diagnosis or plan surgery.</p></div>
+        <div id="emptyState" class="card" style="text-align:center; padding: 50px 0; color: #999;"><p>Select a patient to manage their file.</p></div>
 
         <div id="fileView" class="card" style="display:none;">
             <h2 id="viewName" style="color:var(--primary); margin:0;"></h2>
-            
             <div id="visitInfo" style="background: var(--secondary); padding: 12px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                    <span class="label">Patient Profile Details</span>
+                    <span class="label">Patient Info</span>
                     <p id="viewContact" style="font-weight: bold; color: var(--primary); margin: 0; line-height: 1.4;"></p>
                 </div>
                 <div>
-                    <span class="label">Visit History (Scroll)</span>
+                    <span class="label">Visit Dates (Scroll)</span>
                     <div id="visitHistoryLog" class="visit-log"></div>
                 </div>
             </div>
-            
-            <div class="section">
-                <span class="label">Clinical History</span>
-                <textarea id="vPres" oninput="autoResize(this)"></textarea>
-            </div>
-            
-            <div class="section">
-                <span class="label">Medical Imaging (Compressed)</span>
-                <button style="background:#607d8b; color:white; padding:12px; margin-top:5px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO</button>
+            <div class="section"><span class="label">Clinical History</span><textarea id="vPres" oninput="autoResize(this)"></textarea></div>
+            <div class="section"><span class="label">Imaging</span>
+                <button style="background:#607d8b; color:white; padding:12px;" onclick="document.getElementById('cam').click()">📷 SNAP PHOTO</button>
                 <input type="file" id="cam" accept="image/*" multiple style="display:none" onchange="processAndUpload(event)">
                 <div id="gallery" class="gallery"></div>
             </div>
-
-            <div class="section">
-                <span class="label">Timeline & Management</span>
-                <textarea id="vVisits" oninput="autoResize(this)"></textarea>
-            </div>
-            
+            <div class="section"><span class="label">Management</span><textarea id="vVisits" oninput="autoResize(this)"></textarea></div>
             <div class="section" style="background:#fff0f3;">
                 <span class="label" style="color:var(--danger)">Surgery Plan</span>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><input type="date" id="vOpDate"><input type="text" id="vOpDetail" placeholder="Procedure"></div>
@@ -152,10 +164,13 @@
     }
 
     function initSync() {
-        db.ref('patientIndex').on('value', (snap) => {
+        db.ref('patientIndex').on('value', snap => {
             patientsIndex = snap.val() || {};
             renderList();
+            renderCalendar();
         });
+        db.ref('reminders').on('value', snap => renderRems(snap.val() || {}));
+        db.ref('calls').on('value', snap => renderCalls(snap.val() || {}));
     }
 
     function addPatient() {
@@ -164,7 +179,6 @@
         const id = Date.now();
         const manualDate = document.getElementById('newRegDate').value;
         const date = manualDate ? new Date(manualDate).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
-        
         db.ref('patientIndex/' + id).set({ name, age: document.getElementById('newAge').value, phone: document.getElementById('newPhone').value, dateAdded: date });
         db.ref('patientDetails/' + id).set({ name, presentation: '', visits: '', opD: '', opT: '', images: [], visitDates: [date] });
         ["newName", "newAge", "newPhone", "newRegDate"].forEach(i => document.getElementById(i).value = '');
@@ -174,18 +188,37 @@
         const list = document.getElementById('patientList');
         const query = document.getElementById('searchBox').value.toLowerCase();
         list.innerHTML = '';
-        
         Object.keys(patientsIndex).reverse().forEach(id => {
             const p = patientsIndex[id];
             if (p.name.toLowerCase().includes(query)) {
                 const item = document.createElement('div');
                 item.className = `pt-item ${activeId == id ? 'active' : ''}`;
                 item.onclick = () => loadFullData(id);
-                item.innerHTML = `<div><span class="pt-meta">Reg: ${p.dateAdded || '--'}</span><br><strong>${p.name}</strong><br><small>Age: ${p.age || '--'}</small></div>
-                                  <button style="background:var(--danger); color:white; border:none; padding:5px; border-radius:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
+                item.innerHTML = `<div><span class="pt-meta">Reg: ${p.dateAdded}</span><br><strong>${p.name}</strong></div><button style="background:var(--danger); color:white; border:none; padding:5px; border-radius:4px;" onclick="deleteRec('${id}', event)">✕</button>`;
                 list.appendChild(item);
             }
         });
+    }
+
+    function renderCalendar() {
+        const cal = document.getElementById('opCalendar');
+        const today = new Date(); const monthOut = new Date(); monthOut.setDate(today.getDate() + 30);
+        let rows = "";
+        let count = 0;
+        Object.keys(patientsIndex).forEach(id => {
+            db.ref('patientDetails/' + id).once('value').then(snap => {
+                const d = snap.val();
+                if(d && d.opD) {
+                    const opDate = new Date(d.opD);
+                    if(opDate >= today && opDate <= monthOut) {
+                        rows += `<tr><td>${d.opD}</td><td>${patientsIndex[id].name}</td><td>${d.opT || 'Procedure'}</td></tr>`;
+                        count++;
+                        cal.innerHTML = `<table><tr><th>Date</th><th>Patient</th><th>Operation</th></tr>${rows}</table>`;
+                    }
+                }
+            });
+        });
+        if(count === 0) cal.innerHTML = "No surgeries scheduled for the next 30 days.";
     }
 
     function loadFullData(id) {
@@ -194,34 +227,17 @@
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('fileView').style.display = 'none';
         document.getElementById('loadingMsg').style.display = 'block';
-
         db.ref('patientDetails/' + id).once('value').then(snap => {
             const details = snap.val();
             document.getElementById('loadingMsg').style.display = 'none';
             document.getElementById('fileView').style.display = 'block';
-            document.getElementById('viewName').innerText = patientsIndex[id].name;
-            
-            // Re-added Registration Date here
-            document.getElementById('viewContact').innerHTML = `
-                AGE: ${patientsIndex[id].age || '--'}<br>
-                PHONE: ${patientsIndex[id].phone || '--'}<br>
-                REGISTERED ON: ${patientsIndex[id].dateAdded || '--'}
-            `;
-            
-            const log = document.getElementById('visitHistoryLog');
-            log.innerHTML = '';
-            const dates = details.visitDates || [];
-            dates.slice().reverse().forEach(d => {
-                log.innerHTML += `<div class="visit-date">📅 ${d}</div>`;
-            });
-            
-            const vPres = document.getElementById('vPres');
-            const vVisits = document.getElementById('vVisits');
-            vPres.value = details.presentation || '';
-            vVisits.value = details.visits || '';
-            document.getElementById('vOpDate').value = details.opD || '';
-            document.getElementById('vOpDetail').value = details.opT || '';
-            
+            document.getElementById('viewName').innerText = base.name;
+            document.getElementById('viewContact').innerHTML = `AGE: ${base.age || '--'}<br>PHONE: ${base.phone || '--'}<br>REGISTERED: ${base.dateAdded || '--'}`;
+            const log = document.getElementById('visitHistoryLog'); log.innerHTML = '';
+            (details.visitDates || []).slice().reverse().forEach(d => log.innerHTML += `<div class="visit-date">📅 ${d}</div>`);
+            const vPres = document.getElementById('vPres'); const vVisits = document.getElementById('vVisits');
+            vPres.value = details.presentation || ''; vVisits.value = details.visits || '';
+            document.getElementById('vOpDate').value = details.opD || ''; document.getElementById('vOpDetail').value = details.opT || '';
             renderGallery(details.images || []);
             renderList();
             setTimeout(() => { autoResize(vPres); autoResize(vVisits); }, 100);
@@ -229,27 +245,19 @@
     }
 
     function processAndUpload(e) {
-        const files = e.target.files;
-        const today = new Date().toLocaleDateString('en-GB');
+        const files = e.target.files; const today = new Date().toLocaleDateString('en-GB');
         for (let file of files) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
+            const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
+                const img = new Image(); img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     canvas.width = 1000; canvas.height = (img.height / img.width) * 1000;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                    
                     db.ref('patientDetails/' + activeId).once('value').then(snap => {
-                        const data = snap.val();
-                        const imgs = data.images || [];
-                        const dates = data.visitDates || [];
-                        imgs.push(dataUrl);
-                        if(!dates.includes(today)) dates.push(today);
+                        const data = snap.val(); const imgs = data.images || []; const dates = data.visitDates || [];
+                        imgs.push(dataUrl); if(!dates.includes(today)) dates.push(today);
                         db.ref('patientDetails/' + activeId).update({ images: imgs, visitDates: dates }).then(() => loadFullData(activeId));
                     });
                 };
@@ -265,31 +273,56 @@
         });
     }
 
+    function addCall() {
+        const pt = document.getElementById('callPt').value; const num = document.getElementById('callNum').value;
+        const reason = document.getElementById('callReason').value;
+        if(pt) db.ref('calls').push({ pt, num, reason, status: 'pending' });
+        ["callPt", "callNum", "callReason"].forEach(i => document.getElementById(i).value = '');
+    }
+
+    function renderCalls(calls) {
+        const list = document.getElementById('callList'); list.innerHTML = '';
+        Object.keys(calls).forEach(id => {
+            if(calls[id].status === 'pending') {
+                list.innerHTML += `<div style="background:var(--secondary); padding:10px; border-radius:8px; margin-bottom:5px; border-left:4px solid var(--call);">
+                    <strong>${calls[id].pt}</strong>: <a href="tel:${calls[id].num}">${calls[id].num}</a><br><small>${calls[id].reason}</small>
+                    <button style="float:right; background:var(--success); color:white; border:none; border-radius:4px; padding:2px 5px;" onclick="db.ref('calls/${id}').update({status:'done'})">DONE</button>
+                </div>`;
+            }
+        });
+    }
+
+    function addReminder() {
+        const text = document.getElementById('remText').value; const date = document.getElementById('remDate').value;
+        if(text) db.ref('reminders').push({ text, date, status: 'pending' });
+        document.getElementById('remText').value = '';
+    }
+
+    function renderRems(rems) {
+        const list = document.getElementById('remList'); list.innerHTML = '';
+        Object.keys(rems).forEach(id => {
+            if(rems[id].status === 'pending') {
+                list.innerHTML += `<div style="background:#fff9c4; padding:10px; border-radius:8px; margin-bottom:5px; border-left:4px solid var(--warning);">
+                    <strong>${rems[id].date || ''}</strong>: ${rems[id].text}
+                    <button style="float:right; background:var(--success); color:white; border:none; border-radius:4px; padding:2px 5px;" onclick="db.ref('reminders/${id}').update({status:'done'})">✓</button>
+                </div>`;
+            }
+        });
+    }
+
     function saveAll() {
         const today = new Date().toLocaleDateString('en-GB');
         db.ref('patientDetails/' + activeId).once('value').then(snap => {
-            const dates = snap.val().visitDates || [];
-            if(!dates.includes(today)) dates.push(today);
-            
+            const dates = snap.val().visitDates || []; if(!dates.includes(today)) dates.push(today);
             db.ref('patientDetails/' + activeId).update({
-                presentation: document.getElementById('vPres').value,
-                visits: document.getElementById('vVisits').value,
-                opD: document.getElementById('vOpDate').value,
-                opT: document.getElementById('vOpDetail').value,
-                visitDates: dates
-            }).then(() => {
-                alert("Synced Successfully - Visit Logged");
-                loadFullData(activeId);
-            });
+                presentation: document.getElementById('vPres').value, visits: document.getElementById('vVisits').value,
+                opD: document.getElementById('vOpDate').value, opT: document.getElementById('vOpDetail').value, visitDates: dates
+            }).then(() => { alert("Synced Successfully"); loadFullData(activeId); });
         });
     }
 
     function deleteRec(id, e) {
-        e.stopPropagation();
-        if(confirm("Delete patient record?")) {
-            db.ref('patientIndex/' + id).remove();
-            db.ref('patientDetails/' + id).remove();
-        }
+        e.stopPropagation(); if(confirm("Delete patient record?")) { db.ref('patientIndex/' + id).remove(); db.ref('patientDetails/' + id).remove(); }
     }
 </script>
 </body>
