@@ -1886,12 +1886,18 @@
     ================================================================ */
     function loadFullData(id) {
         if (activeListener) activeListener.off();
+        var previousId = activeId;
         activeId = id;
         document.getElementById('vPres').dataset.stamped = '';
         document.getElementById('vVisits').dataset.stamped = '';
         switchMainTab('patient');
         switchSubTab('clinical');
-        db.ref('patientIndex/' + id).update({ isWaiting: false, hasPendingLab: false }).catch(handleFirebaseError);
+        /* Opening a DIFFERENT file means the previous patient has left the room.
+           Take him out of the "with doctor" queue; the display will then show him
+           under Labs Waiting or Seen depending on whether he has a pending lab. */
+        if (previousId && previousId !== id) {
+            db.ref('patientIndex/' + previousId).update({ isWaiting: false }).catch(handleFirebaseError);
+        }
         document.querySelectorAll('.pt-item').forEach(function(el) { el.classList.remove('active'); });
         var ptEl = document.getElementById('pt-' + id);
         if (ptEl) ptEl.classList.add('active');
@@ -2239,6 +2245,18 @@
         var h = ptDetails[activeId].labs[safeKey].history || [];
         h.push({ val: v, dt: dt, stat: status });
         db.ref('patientDetails/' + activeId + '/labs/' + safeKey).update({ pending: false, history: h }).catch(handleFirebaseError);
+
+        /* If this was the last lab still pending for this patient, clear the
+           index-level flag so he drops out of "Labs Waiting" on the display. */
+        var allLabs = ptDetails[activeId].labs || {};
+        var stillPending = false;
+        for (var lk in allLabs) {
+            if (lk === safeKey) continue;
+            if (allLabs[lk] && allLabs[lk].pending) { stillPending = true; break; }
+        }
+        if (!stillPending) {
+            db.ref('patientIndex/' + activeId).update({ hasPendingLab: false }).catch(handleFirebaseError);
+        }
     }
 
     function editLabEntry(safeKey, idx) {
@@ -3516,6 +3534,12 @@
         clearInterval(vosClockInterval);
     }
 
+    function vosCallNext() {
+        if (vosCurrentId) {
+            db.ref('patientIndex/' + vosCurrentId).update({ isWaiting: false }).catch(handleFirebaseError);
+        }
+    }
+
     var vosRenderTimer = null;
 function renderVisionOSDisplay() {
     if (currentMainTab !== 'waiting') return;
@@ -3539,10 +3563,10 @@ function _renderVisionOSDisplay() {
         var pName = p.name || '';
         var pTime = p.queueTime || 0;
 
-        if (p.hasPendingLab === true) {
-            lQueue.push({ id: id, name: pName, time: pTime });
-        } else if (p.isWaiting) {
+        if (p.isWaiting) {
             qQueue.push({ id: id, name: pName, time: pTime });
+        } else if (p.hasPendingLab === true) {
+            lQueue.push({ id: id, name: pName, time: pTime });
         } else {
             var lvTs = parseIraqiDate(p.lastVisit);
             var daTs = parseIraqiDate(p.dateAdded);
@@ -4792,4 +4816,3 @@ function _renderVisionOSDisplay() {
 </script>
 </body>
 </html>
-
