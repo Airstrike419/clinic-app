@@ -650,7 +650,13 @@
     .ss-ampm { font-size: clamp(18px, 2.2vw, 32px); font-weight: 300; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; }
     .ss-date-en { font-size: clamp(16px, 2vw, 26px); font-weight: 300; color: rgba(255,255,255,0.5); letter-spacing: 0.01em; margin-top: 8px; }
     .ss-date-hijri { font-size: clamp(13px, 1.5vw, 20px); font-weight: 300; color: rgba(255,255,255,0.3); direction: rtl; margin-top: 2px; }
-    .ss-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; width: 100%; max-width: 1080px; }
+    .ss-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; width: 100%; max-width: 1400px; }
+    .ss-current-wrap { text-align: center; margin: 6px 0 2px; }
+    .ss-current-label { font-size: clamp(12px, 1.3vw, 17px); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #64D2FF; margin-bottom: 8px; }
+    .ss-current-name { font-size: clamp(44px, 6.5vw, 92px); font-weight: 700; color: white; letter-spacing: -0.02em; line-height: 1.05; text-shadow: 0 0 60px rgba(10,132,255,0.45), 0 0 20px rgba(94,92,230,0.2); }
+    .ss-mini-list { display: flex; flex-direction: column; gap: 7px; max-height: 220px; overflow: hidden; }
+    .ss-mini-item { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ss-mini-empty { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; padding: 16px 0; }
     .ss-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
     .ss-card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; display: block; }
     .ss-cal-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
@@ -1448,6 +1454,10 @@
                 <img src="logo.jpg" class="ss-logo" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
                 <span class="ss-clinic-title">Dr. Saad Sabry Alzubaidy &mdash; Surgical Clinic</span>
             </div>
+            <div class="ss-current-wrap" id="ssCurrentWrap" style="display:none;">
+                <div class="ss-current-label">Doctor is seeing</div>
+                <div class="ss-current-name" id="ssCurrentName">&mdash;</div>
+            </div>
             <div class="ss-clock-wrap">
                 <div class="ss-time" id="ssTime">00:00</div>
                 <div class="ss-sub-row">
@@ -1469,21 +1479,12 @@
                     </div>
                 </div>
                 <div class="ss-card">
-                    <span class="ss-card-label">&#128203; Today's Session</span>
-                    <div class="ss-stat-list">
-                        <div class="ss-stat-row">
-                            <div class="ss-stat-icon" style="background:rgba(48,209,88,0.15);">&#9989;</div>
-                            <div><div class="ss-stat-lbl">Seen Today</div><div class="ss-stat-val" id="ssSeen">0</div></div>
-                        </div>
-                        <div class="ss-stat-row">
-                            <div class="ss-stat-icon" style="background:rgba(10,132,255,0.15);">&#8987;</div>
-                            <div><div class="ss-stat-lbl">Waiting</div><div class="ss-stat-val" id="ssWaiting">0</div></div>
-                        </div>
-                        <div class="ss-stat-row">
-                            <div class="ss-stat-icon" style="background:rgba(255,159,10,0.15);">&#128100;</div>
-                            <div><div class="ss-stat-lbl">Next Patient</div><div class="ss-stat-next" id="ssNext">&mdash;</div></div>
-                        </div>
-                    </div>
+                    <span class="ss-card-label">&#9989; Seen Today (<span id="ssSeenCount">0</span>)</span>
+                    <div class="ss-mini-list" id="ssSeenList"><div class="ss-mini-empty">No patients finished yet</div></div>
+                </div>
+                <div class="ss-card">
+                    <span class="ss-card-label">&#129514; Labs Waiting (<span id="ssLabCount">0</span>)</span>
+                    <div class="ss-mini-list" id="ssLabList"><div class="ss-mini-empty">No tests pending</div></div>
                 </div>
             </div>
         </div>
@@ -3630,6 +3631,8 @@ function _renderVisionOSDisplay() {
         }
     }
     document.getElementById('vosSeenList').innerHTML = seenHtml;
+
+    if (typeof updateSSStats === 'function') updateSSStats();
 }
     /* ================================================================
        BOOT
@@ -3822,20 +3825,65 @@ function _renderVisionOSDisplay() {
     }
 
     function updateSSStats() {
-        var seen = 0, waiting = 0, nextName = '\u2014';
+        var todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        var todayTs = todayStart.getTime();
+
+        var qQueue = [], lQueue = [], sQueue = [];
         var ids = Object.keys(ptIdx);
-        var todayStr = new Date().toLocaleDateString('en-GB');
         for (var i = 0; i < ids.length; i++) {
-            var p = ptIdx[ids[i]];
-            if (p.isWaiting) { waiting++; if (nextName === '\u2014') nextName = p.name; }
-            if (p.lastVisit === todayStr && !p.isWaiting) seen++;
+            var id = ids[i];
+            var p = ptIdx[id];
+            var pName = p.name || '';
+            var pTime = p.queueTime || 0;
+            if (p.isWaiting) {
+                qQueue.push({ id: id, name: pName, time: pTime });
+            } else if (p.hasPendingLab === true) {
+                lQueue.push({ id: id, name: pName, time: pTime });
+            } else {
+                var lvTs = parseIraqiDate(p.lastVisit);
+                var daTs = parseIraqiDate(p.dateAdded);
+                if (lvTs >= todayTs || daTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs });
+            }
         }
-        var sEl = document.getElementById('ssSeen');
-        var wEl = document.getElementById('ssWaiting');
-        var nEl = document.getElementById('ssNext');
-        if (sEl) sEl.textContent = seen;
-        if (wEl) wEl.textContent = waiting;
-        if (nEl) nEl.textContent = nextName;
+        qQueue.sort(function(a, b) { return a.time - b.time; });
+        lQueue.sort(function(a, b) { return a.time - b.time; });
+        sQueue.sort(function(a, b) { return b.time - a.time; });
+
+        var curWrap = document.getElementById('ssCurrentWrap');
+        var curName = document.getElementById('ssCurrentName');
+        if (qQueue.length > 0) {
+            curWrap.style.display = '';
+            curName.textContent = qQueue[0].name;
+        } else {
+            curWrap.style.display = 'none';
+        }
+
+        var seenCountEl = document.getElementById('ssSeenCount');
+        var seenListEl = document.getElementById('ssSeenList');
+        if (seenCountEl) seenCountEl.textContent = sQueue.length;
+        if (seenListEl) {
+            if (sQueue.length === 0) {
+                seenListEl.innerHTML = '<div class="ss-mini-empty">No patients finished yet</div>';
+            } else {
+                var sHtml = '';
+                for (var s = 0; s < sQueue.length; s++) sHtml += '<div class="ss-mini-item">' + escapeHtml(sQueue[s].name) + '</div>';
+                seenListEl.innerHTML = sHtml;
+            }
+        }
+
+        var labCountEl = document.getElementById('ssLabCount');
+        var labListEl = document.getElementById('ssLabList');
+        if (labCountEl) labCountEl.textContent = lQueue.length;
+        if (labListEl) {
+            if (lQueue.length === 0) {
+                labListEl.innerHTML = '<div class="ss-mini-empty">No tests pending</div>';
+            } else {
+                var lHtml = '';
+                for (var l = 0; l < lQueue.length; l++) lHtml += '<div class="ss-mini-item">' + escapeHtml(lQueue[l].name) + '</div>';
+                labListEl.innerHTML = lHtml;
+            }
+        }
     }
 
     /* ================================================================
