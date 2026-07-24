@@ -639,25 +639,28 @@
     @keyframes ssb2 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-20vw,-14vh) scale(1.2)} }
     @keyframes ssb3 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-12vw,14vh) scale(0.88)} }
     @keyframes ssb4 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(18vw,-8vh) scale(1.3)} }
-    .ss-content { position: relative; z-index: 1; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 44px 56px; box-sizing: border-box; }
+    .ss-content { position: relative; z-index: 1; width: 100%; height: 100%; display: grid; grid-template-rows: auto auto minmax(140px, auto) auto auto; align-items: center; justify-items: center; row-gap: 14px; padding: 36px 56px; box-sizing: border-box; }
     .ss-top-bar { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 11px 22px; border-radius: 22px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
     .ss-logo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); }
     .ss-clinic-title { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.7); letter-spacing: -0.01em; }
-    .ss-clock-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; justify-content: center; gap: 4px; }
-    .ss-time { font-size: clamp(96px, 17vw, 210px); font-weight: 100; color: white; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 0 100px rgba(10,132,255,0.25), 0 0 30px rgba(94,92,230,0.15); }
+    .ss-clock-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+    .ss-time { font-size: clamp(72px, 12vw, 160px); font-weight: 100; color: white; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 0 100px rgba(10,132,255,0.25), 0 0 30px rgba(94,92,230,0.15); }
     .ss-sub-row { display: flex; align-items: baseline; gap: 18px; }
-    .ss-secs { font-size: clamp(28px, 3.5vw, 52px); font-weight: 200; color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums; }
-    .ss-ampm { font-size: clamp(18px, 2.2vw, 32px); font-weight: 300; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; }
-    .ss-date-en { font-size: clamp(16px, 2vw, 26px); font-weight: 300; color: rgba(255,255,255,0.5); letter-spacing: 0.01em; margin-top: 8px; }
-    .ss-date-hijri { font-size: clamp(13px, 1.5vw, 20px); font-weight: 300; color: rgba(255,255,255,0.3); direction: rtl; margin-top: 2px; }
-    .ss-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; width: 100%; max-width: 1400px; }
-    .ss-current-wrap { text-align: center; margin: 6px 0 2px; }
-    .ss-current-label { font-size: clamp(12px, 1.3vw, 17px); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #64D2FF; margin-bottom: 8px; }
-    .ss-current-name { font-size: clamp(44px, 6.5vw, 92px); font-weight: 700; color: white; letter-spacing: -0.02em; line-height: 1.05; text-shadow: 0 0 60px rgba(10,132,255,0.45), 0 0 20px rgba(94,92,230,0.2); }
-    .ss-mini-list { display: flex; flex-direction: column; gap: 7px; max-height: 220px; overflow: hidden; }
-    .ss-mini-item { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ss-secs { font-size: clamp(22px, 2.6vw, 40px); font-weight: 200; color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums; }
+    .ss-ampm { font-size: clamp(15px, 1.7vw, 26px); font-weight: 300; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; }
+    .ss-date-en { font-size: clamp(14px, 1.6vw, 22px); font-weight: 300; color: rgba(255,255,255,0.5); letter-spacing: 0.01em; margin-top: 6px; }
+    .ss-date-hijri { font-size: clamp(12px, 1.3vw, 17px); font-weight: 300; color: rgba(255,255,255,0.3); direction: rtl; margin-top: 2px; }
+    .ss-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: 100%; max-width: 1000px; }
+    .ss-queue-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; width: 100%; max-width: 1400px; }
+    .ss-current-wrap { text-align: center; min-height: 74px; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.4s ease; }
+    .ss-current-wrap.ss-has-patient { opacity: 1; }
+    .ss-current-label { font-size: clamp(11px, 1.1vw, 15px); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #64D2FF; margin-bottom: 6px; }
+    .ss-current-name { font-size: clamp(36px, 5vw, 68px); font-weight: 700; color: white; letter-spacing: -0.02em; line-height: 1.05; text-shadow: 0 0 60px rgba(10,132,255,0.45), 0 0 20px rgba(94,92,230,0.2); max-width: 90vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ss-mini-list { display: flex; flex-direction: column; gap: 7px; flex: 1; overflow-y: auto; }
+    .ss-mini-item { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
     .ss-mini-empty { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; padding: 16px 0; }
-    .ss-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px 24px; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+    .ss-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 18px 22px; backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); height: 190px; display: flex; flex-direction: column; box-sizing: border-box; overflow-y: auto; }
+    .ss-info-row .ss-card { height: 250px; }
     .ss-card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; display: block; }
     .ss-cal-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
     .ss-cal-mname { font-size: 16px; font-weight: 600; color: white; }
@@ -1454,7 +1457,7 @@
                 <img src="logo.jpg" class="ss-logo" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3304/3304567.png'">
                 <span class="ss-clinic-title">Dr. Saad Sabry Alzubaidy &mdash; Surgical Clinic</span>
             </div>
-            <div class="ss-current-wrap" id="ssCurrentWrap" style="display:none;">
+            <div class="ss-current-wrap" id="ssCurrentWrap">
                 <div class="ss-current-label">Doctor is seeing</div>
                 <div class="ss-current-name" id="ssCurrentName">&mdash;</div>
             </div>
@@ -1467,7 +1470,7 @@
                 <div class="ss-date-en" id="ssDateEn">Saturday, 1 January 2026</div>
                 <div class="ss-date-hijri" id="ssDateHijri">&#x661; ذو القعدة ١٤٤٧ هـ</div>
             </div>
-            <div class="ss-bottom">
+            <div class="ss-info-row">
                 <div class="ss-card">
                     <span class="ss-card-label">&#128197; Calendar</span>
                     <div id="ssCalendar"></div>
@@ -1477,6 +1480,12 @@
                     <div class="ss-prayer-list" id="ssPrayers">
                         <div style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:16px 0;">Loading...</div>
                     </div>
+                </div>
+            </div>
+            <div class="ss-queue-row">
+                <div class="ss-card">
+                    <span class="ss-card-label">&#8987; Waiting (<span id="ssWaitingCount">0</span>)</span>
+                    <div class="ss-mini-list" id="ssWaitingList"><div class="ss-mini-empty">No one else waiting</div></div>
                 </div>
                 <div class="ss-card">
                     <span class="ss-card-label">&#9989; Seen Today (<span id="ssSeenCount">0</span>)</span>
@@ -3850,10 +3859,24 @@ function _renderVisionOSDisplay() {
         var curWrap = document.getElementById('ssCurrentWrap');
         var curName = document.getElementById('ssCurrentName');
         if (qQueue.length > 0) {
-            curWrap.style.display = '';
+            curWrap.classList.add('ss-has-patient');
             curName.textContent = qQueue[0].name;
         } else {
-            curWrap.style.display = 'none';
+            curWrap.classList.remove('ss-has-patient');
+        }
+
+        var waitingCountEl = document.getElementById('ssWaitingCount');
+        var waitingListEl = document.getElementById('ssWaitingList');
+        var restOfQueue = qQueue.slice(1);
+        if (waitingCountEl) waitingCountEl.textContent = restOfQueue.length;
+        if (waitingListEl) {
+            if (restOfQueue.length === 0) {
+                waitingListEl.innerHTML = '<div class="ss-mini-empty">No one else waiting</div>';
+            } else {
+                var wHtml = '';
+                for (var w = 0; w < restOfQueue.length; w++) wHtml += '<div class="ss-mini-item">' + escapeHtml(restOfQueue[w].name) + '</div>';
+                waitingListEl.innerHTML = wHtml;
+            }
         }
 
         var seenCountEl = document.getElementById('ssSeenCount');
