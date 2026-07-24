@@ -1400,8 +1400,8 @@
     </div>
 
         <!-- VISIONOS DISPLAY TAB PANEL -->
+    <button class="vos-exit-btn" id="vosExitBtn" onclick="switchMainTab('home')">&#9664; Exit Display</button>
     <div id="waitingPanel" style="display:none; grid-column:1/-1;">
-        <button class="vos-exit-btn" id="vosExitBtn" onclick="switchMainTab('home')">&#9664; Exit Display</button>
         <div class="vos-liquid-bg">
             <div class="vos-blob vos-blob-1"></div>
             <div class="vos-blob vos-blob-2"></div>
@@ -1442,7 +1442,7 @@
     </div>
 
     <!-- ═══ APPLE SCREENSAVER OVERLAY ═══ -->
-    <div id="appleSS" onclick="dismissScreensaver()">
+    <div id="appleSS" onclick="if (currentMainTab === 'waiting') { switchMainTab('home'); } else { dismissScreensaver(); }">
         <div class="ss-aurora">
             <div class="ss-aurora-blob ss-blob-1"></div>
             <div class="ss-aurora-blob ss-blob-2"></div>
@@ -1488,7 +1488,7 @@
                 </div>
             </div>
         </div>
-        <div class="ss-tap-hint">Tap anywhere to dismiss</div>
+        <div class="ss-tap-hint">Tap anywhere to exit</div>
     </div>
     <!-- ═══ END SCREENSAVER ═══ -->
 
@@ -3114,16 +3114,13 @@
             clearTimeout(ssTimer);
             if (typeof dismissScreensaver === 'function') dismissScreensaver();
         } else if (tab === 'waiting') {
-            /* FULL-SCREEN DISPLAY MODE */
+            /* FULL-SCREEN DISPLAY MODE — clock/prayer screen with big current name + widgets */
             appHeader.style.display = 'none';
             tabBar.style.display = 'none';
             if (exitBtn) exitBtn.style.display = 'block';
             document.body.style.overflow = 'hidden';
-            waiting.style.display = 'block';
-            waiting.classList.add('active-display');
-            startVosClock();
-            renderVisionOSDisplay();
-            resetScreensaverTimer();
+            clearTimeout(ssTimer);
+            showScreensaver();
         } else if (tab === 'monjaro') {
             if (monjaro) monjaro.style.display = 'block';
             renderMonjaroDashboard();
