@@ -1577,28 +1577,25 @@
             renderWebRequests();
         });
 
-                db.ref('patientIndex').on('value', function(snap) {
-            ptIdx = snap.val() || {};
-            renderList();
-            renderLabQueue();
-            scheduleCalendarRender();
-            document.getElementById('totalPtCount').innerText = Object.keys(ptIdx).length + " Patients";
-            if (currentRegTab === 'followup') renderFollowUpPanel();
-            if (currentMainTab === 'waiting') { 
-                renderVisionOSDisplay(); 
-            }
-        });
-        db.ref('reminders').on('value', function(snap) {
-    allReminders = snap.val() || {};
-    renderRems();
-    checkActiveReminderBanner();
+        db.ref('patientIndex').on('value', function(snap) {
+    ptIdx = snap.val() || {};
+    renderList();
+    renderLabQueue();
+    scheduleCalendarRender();
+    document.getElementById('totalPtCount').innerText = Object.keys(ptIdx).length + " Patients";
     if (currentRegTab === 'followup') renderFollowUpPanel();
-    if (currentMainTab === 'monjaro') renderMJRemindersTab();
-    if (activeId && currentSubTab === 'monjaro') renderMonjaroPatientFile(activeId);
-    if (currentMainTab === 'waiting' && ssVisible && typeof updateSSStats === 'function') {
-        updateSSStats();
-    }
+    if (currentMainTab === 'waiting') { renderVisionOSDisplay(); resetScreensaverTimer(); }
 });
+
+        db.ref('reminders').on('value', function(snap) {
+            allReminders = snap.val() || {};
+            renderRems();
+            checkActiveReminderBanner();
+            if (currentRegTab === 'followup') renderFollowUpPanel();
+            if (currentMainTab === 'monjaro') renderMJRemindersTab();
+            if (activeId && currentSubTab === 'monjaro') renderMonjaroPatientFile(activeId);
+        });
+    }
 
     function handleFirebaseError(error) {
         console.error('Firebase Error:', error);
@@ -3125,20 +3122,15 @@
             renderDashboardReminders();
             renderCalendarFromDB();
             clearTimeout(ssTimer);
-            if (typeof dismissScreensaver === 'function') dismissScreensaver();        } else if (tab === 'waiting') {
-            /* FULL-SCREEN DISPLAY MODE — VisionOS Display only, NO screensaver */
+            if (typeof dismissScreensaver === 'function') dismissScreensaver();
+        } else if (tab === 'waiting') {
+            /* FULL-SCREEN DISPLAY MODE — clock/prayer screen with big current name + widgets */
             appHeader.style.display = 'none';
             tabBar.style.display = 'none';
             if (exitBtn) exitBtn.style.display = 'block';
             document.body.style.overflow = 'hidden';
-            
-            waiting.style.display = 'block';
-            waiting.classList.add('active-display');
-            startVosClock();
-            renderVisionOSDisplay();
-            
-            dismissScreensaver();
             clearTimeout(ssTimer);
+            showScreensaver();
         } else if (tab === 'monjaro') {
             if (monjaro) monjaro.style.display = 'block';
             renderMonjaroDashboard();
@@ -3680,11 +3672,12 @@ function _renderVisionOSDisplay() {
     var ssPrayerCacheDate = null;
     var SS_DELAY = 3 * 60 * 1000; /* 3 minutes */
 
-        function resetScreensaverTimer() {
+    function resetScreensaverTimer() {
         clearTimeout(ssTimer);
         if (ssVisible) dismissScreensaver();
-        /* Screensaver disabled - Display tab stays on visionOS layout permanently */
-    }
+        if (currentMainTab === 'waiting') {
+            ssTimer = setTimeout(showScreensaver, SS_DELAY);
+        }
     }
 
     function showScreensaver() {
