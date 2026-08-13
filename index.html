@@ -1584,7 +1584,11 @@
     scheduleCalendarRender();
     document.getElementById('totalPtCount').innerText = Object.keys(ptIdx).length + " Patients";
     if (currentRegTab === 'followup') renderFollowUpPanel();
-    if (currentMainTab === 'waiting') { renderVisionOSDisplay(); resetScreensaverTimer(); }
+    if (currentMainTab === 'waiting') {
+        renderVisionOSDisplay();
+        // 🆕 Don't reset screensaver timer on every ptIdx change — only update the stats
+        if (ssVisible && typeof updateSSStats === 'function') updateSSStats();
+    }
 });
 
         db.ref('reminders').on('value', function(snap) {
@@ -1741,26 +1745,32 @@
     }
 
     function checkInPatient(id) {
-        if (!ptIdx[id]) return;
-        if (typeof resetScreensaverTimer === 'function') resetScreensaverTimer();
-        if (ptIdx[id].isWaiting) {
-            loadFullData(id);
-            showToast(ptIdx[id].name + ' \u2014 file opened.');
-        } else {
-            var today = new Date().toLocaleDateString('en-GB');
-            db.ref('patientIndex/' + id).update({ isWaiting: true, lastVisit: today }).catch(handleFirebaseError);
-            db.ref('patientDetails/' + id).once('value', function(snap) {
-                var d = snap.val() || {};
-                var dates = d.visitDates || [];
-                if (dates.indexOf(today) === -1) {
-                    dates.push(today);
-                    db.ref('patientDetails/' + id + '/visitDates').set(dates).catch(handleFirebaseError);
-                }
-            });
-            showToast('\u2705 ' + ptIdx[id].name + ' checked in & visit logged!');
-        }
-        setTimeout(function() { if (currentRegTab === 'followup') renderFollowUpPanel(); }, 600);
+    if (!ptIdx[id]) return;
+    if (typeof resetScreensaverTimer === 'function') resetScreensaverTimer();
+    // If already waiting or in clinic, just open the file
+    if (ptIdx[id].clinicStatus === 'waiting' || ptIdx[id].isWaiting || ptIdx[id].clinicStatus === 'inclinic') {
+        loadFullData(id);
+        showToast(ptIdx[id].name + ' — file opened.');
+    } else {
+        var today = new Date().toLocaleDateString('en-GB');
+        // Set status to WAITING
+        db.ref('patientIndex/' + id).update({ 
+            isWaiting: true, 
+            clinicStatus: 'waiting', 
+            lastVisit: today 
+        }).catch(handleFirebaseError);
+        db.ref('patientDetails/' + id).once('value', function(snap) {
+            var d = snap.val() || {};
+            var dates = d.visitDates || [];
+            if (dates.indexOf(today) === -1) {
+                dates.push(today);
+                db.ref('patientDetails/' + id + '/visitDates').set(dates).catch(handleFirebaseError);
+            }
+        });
+        showToast('\u2705 ' + ptIdx[id].name + ' checked in — now WAITING.');
     }
+    setTimeout(function() { if (currentRegTab === 'followup') renderFollowUpPanel(); }, 600);
+}
 
     var followUpSearchTimer = null;
     function onFollowUpSearch() {
@@ -1896,13 +1906,50 @@
        LOAD PATIENT
     ================================================================ */
     function loadFullData(id) {
-        if (activeListener) activeListener.off();
-        var previousId = activeId;
+    // 🔴 CRITICAL: Flush any pending save to the PREVIOUS patient before switching
+    if (syncTimeout && syncTargetId && syncTargetId !== id) {
+        clearTimeout(syncTimeout);
+        var prevId = syncTargetId;
+        syncTimeout = null;
+        syncTargetId = null;
+        saveAll(false, prevId);  // Save form data to the patient it belonged to
+        document.getElementById('syncIndicator').style.display = 'none';
+    }
+    
+    if (activeListener) activeListener.off();
+    var previousId = activeId;
         activeId = id;
         document.getElementById('vPres').dataset.stamped = '';
         document.getElementById('vVisits').dataset.stamped = '';
         switchMainTab('patient');
         switchSubTab('clinical');
+        // 🆕 SMART STATUS: previous patient → seentoday, current → inclinic
+    if (previousId && previousId !== id) {
+        var prevPt = ptIdx[previousId];
+        if (prevPt && (prevPt.clinicStatus === 'inclinic' || prevPt.isWaiting)) {
+            var todayStr = new Date().toLocaleDateString('en-GB');
+            db.ref('patientIndex/' + previousId).update({
+                clinicStatus: 'seentoday',
+                isWaiting: false,
+                lastVisit: todayStr
+            }).catch(handleFirebaseError);
+            // Log visit date for previous patient
+            db.ref('patientDetails/' + previousId + '/visitDates').once('value').then(function(snap) {
+                var dates = snap.val() || [];
+                if (dates.indexOf(todayStr) === -1) {
+                    dates.push(todayStr);
+                    db.ref('patientDetails/' + previousId + '/visitDates').set(dates).catch(handleFirebaseError);
+                }
+            });
+        }
+    }
+    // Mark current patient as "in clinic"
+    if (ptIdx[id] && (ptIdx[id].isWaiting || !ptIdx[id].clinicStatus || ptIdx[id].clinicStatus === 'waiting')) {
+        db.ref('patientIndex/' + id).update({
+            clinicStatus: 'inclinic',
+            isWaiting: false  // No longer in the lobby queue
+        }).catch(handleFirebaseError);
+    }
         /* Opening a DIFFERENT file means the previous patient has left the room.
            Take him out of the "with doctor" queue; the display will then show him
            under Labs Waiting or Seen depending on whether he has a pending lab. */
@@ -2574,16 +2621,27 @@
        ADD / DELETE PATIENT
     ================================================================ */
     function addPatient() {
-        if (typeof resetScreensaverTimer === 'function') resetScreensaverTimer();
-        var n = document.getElementById('newName').value;
-        if (!n) return;
-        var id = Date.now();
-        var d = new Date().toLocaleDateString('en-GB');
-        db.ref('patientIndex/' + id).set({ name: n, age: document.getElementById('newAge').value, phone: document.getElementById('newPhone').value, complaint: document.getElementById('newComp').value, dateAdded: d, lastVisit: d, isWaiting: true, pinned: false }).catch(handleFirebaseError);
-        db.ref('patientDetails/' + id).set({ name: n, presentation: '', visits: '', visitDates: [], labFindings: '' }).catch(handleFirebaseError);
-        ['newName','newAge','newPhone','newComp'].forEach(function(f) { document.getElementById(f).value = ''; });
-        showToast("Patient Registered successfully.");
-    }
+    if (typeof resetScreensaverTimer === 'function') resetScreensaverTimer();
+    var n = document.getElementById('newName').value;
+    if (!n) return;
+    var id = Date.now();
+    var d = new Date().toLocaleDateString('en-GB');
+    // Set status to WAITING
+    db.ref('patientIndex/' + id).set({ 
+        name: n, 
+        age: document.getElementById('newAge').value, 
+        phone: document.getElementById('newPhone').value, 
+        complaint: document.getElementById('newComp').value, 
+        dateAdded: d, 
+        lastVisit: d, 
+        isWaiting: true, 
+        clinicStatus: 'waiting', 
+        pinned: false 
+    }).catch(handleFirebaseError);
+    db.ref('patientDetails/' + id).set({ name: n, presentation: '', visits: '', visitDates: [], labFindings: '' }).catch(handleFirebaseError);
+    ['newName','newAge','newPhone','newComp'].forEach(function(f) { document.getElementById(f).value = ''; });
+    showToast("Patient Registered successfully.");
+}
 
     function deletePt(id) {
         if (confirm("Permanently delete this patient and all related data?")) {
@@ -2620,34 +2678,46 @@
     /* ================================================================
        SAVE
     ================================================================ */
-    function autoSyncTrigger() {
-        document.getElementById('syncIndicator').style.display = 'flex';
-        if (syncTimeout) clearTimeout(syncTimeout);
-        syncTimeout = setTimeout(function() { saveAll(false); }, 2000);
-    }
+    var syncTargetId = null;  // NEW: track which patient the pending save belongs to
 
-    function saveAll(manual) {
-        if (!activeId) return;
-        var today = new Date().toLocaleDateString('en-GB');
-        var detailRef = db.ref('patientDetails/' + activeId);
-        detailRef.once('value').then(function(snap) {
-            var d = snap.val() || {};
-            var dates = d.visitDates || [];
-            if (dates.indexOf(today) === -1) dates.push(today);
-            detailRef.update({
-                presentation: document.getElementById('vPres').value,
-                visits: document.getElementById('vVisits').value,
-                labFindings: document.getElementById('vLabFindings').value,
-                opD: document.getElementById('vOpDate').value,
-                opT: document.getElementById('vOpDetail').value,
-                visitDates: dates
-            }).catch(handleFirebaseError);
-            if (dates.length > 0) db.ref('patientIndex/' + activeId).update({ lastVisit: dates[dates.length-1] }).catch(handleFirebaseError);
-            document.getElementById('syncIndicator').style.display = 'none';
-            if (manual) showToast("Cloud Sync Successful");
+function autoSyncTrigger() {
+    document.getElementById('syncIndicator').style.display = 'flex';
+    if (syncTimeout) clearTimeout(syncTimeout);
+    syncTargetId = activeId;  // CAPTURE the current patient ID
+    syncTimeout = setTimeout(function() {
+        var targetId = syncTargetId;
+        syncTargetId = null;
+        saveAll(false, targetId);
+    }, 2000);
+}
+
+function saveAll(manual, targetId) {
+    // Use the captured targetId, NOT the current activeId
+    targetId = targetId || activeId;
+    if (!targetId) return;
+    var today = new Date().toLocaleDateString('en-GB');
+    var detailRef = db.ref('patientDetails/' + targetId);
+    detailRef.once('value').then(function(snap) {
+        var d = snap.val() || {};
+        var dates = d.visitDates || [];
+        if (dates.indexOf(today) === -1) dates.push(today);
+        detailRef.update({
+            presentation: document.getElementById('vPres').value,
+            visits: document.getElementById('vVisits').value,
+            labFindings: document.getElementById('vLabFindings').value,
+            opD: document.getElementById('vOpDate').value,
+            opT: document.getElementById('vOpDetail').value,
+            visitDates: dates
         }).catch(handleFirebaseError);
-    }
-
+        if (dates.length > 0) {
+            db.ref('patientIndex/' + targetId).update({ lastVisit: dates[dates.length-1] }).catch(handleFirebaseError);
+        }
+        if (targetId === activeId) {
+            document.getElementById('syncIndicator').style.display = 'none';
+        }
+        if (manual) showToast("Cloud Sync Successful");
+    }).catch(handleFirebaseError);
+}
     function manualSync() { saveAll(true); }
 
     /* ================================================================
@@ -3124,13 +3194,22 @@
             clearTimeout(ssTimer);
             if (typeof dismissScreensaver === 'function') dismissScreensaver();
         } else if (tab === 'waiting') {
-            /* FULL-SCREEN DISPLAY MODE — clock/prayer screen with big current name + widgets */
-            appHeader.style.display = 'none';
-            tabBar.style.display = 'none';
-            if (exitBtn) exitBtn.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            clearTimeout(ssTimer);
-            showScreensaver();
+    appHeader.style.display = 'none';
+    tabBar.style.display = 'none';
+    if (exitBtn) exitBtn.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    // 🆕 SHOW the display panel
+    waiting.classList.add('active-display');
+    waiting.style.display = 'flex';
+    startVosClock();
+    renderVisionOSDisplay();  // Force initial render
+    
+    // 🆕 DON'T show screensaver immediately — only after idle
+    clearTimeout(ssTimer);
+    if (ssVisible) dismissScreensaver();
+    ssTimer = setTimeout(showScreensaver, SS_DELAY);
+}
         } else if (tab === 'monjaro') {
             if (monjaro) monjaro.style.display = 'block';
             renderMonjaroDashboard();
@@ -3543,10 +3622,15 @@
     }
 
     function vosCallNext() {
-        if (vosCurrentId) {
-            db.ref('patientIndex/' + vosCurrentId).update({ isWaiting: false }).catch(handleFirebaseError);
-        }
+    if (vosCurrentId) {
+        var todayStr = new Date().toLocaleDateString('en-GB');
+        db.ref('patientIndex/' + vosCurrentId).update({
+            isWaiting: false,
+            clinicStatus: 'seentoday',
+            lastVisit: todayStr
+        }).catch(handleFirebaseError);
     }
+}
 
     var vosRenderTimer = null;
 function renderVisionOSDisplay() {
@@ -3562,7 +3646,7 @@ function _renderVisionOSDisplay() {
     todayStart.setHours(0, 0, 0, 0);
     var todayTs = todayStart.getTime();
 
-    var qQueue = [], lQueue = [], sQueue = [];
+    var qQueue = [], lQueue = [], sQueue = [], inClinic = [];
     var ids = Object.keys(ptIdx);
 
     for (var i = 0; i < ids.length; i++) {
@@ -3571,10 +3655,14 @@ function _renderVisionOSDisplay() {
         var pName = p.name || '';
         var pTime = p.queueTime || 0;
 
-        if (p.isWaiting) {
+        if (p.clinicStatus === 'inclinic') {
+            inClinic.push({ id: id, name: pName, time: pTime });
+        } else if (p.clinicStatus === 'waiting' || p.isWaiting) {
             qQueue.push({ id: id, name: pName, time: pTime });
         } else if (p.hasPendingLab === true) {
             lQueue.push({ id: id, name: pName, time: pTime });
+        } else if (p.clinicStatus === 'seentoday') {
+            sQueue.push({ id: id, name: pName, time: pTime });
         } else {
             var lvTs = parseIraqiDate(p.lastVisit);
             var daTs = parseIraqiDate(p.dateAdded);
@@ -3588,20 +3676,25 @@ function _renderVisionOSDisplay() {
     lQueue.sort(function(a, b) { return a.time - b.time; });
     sQueue.sort(function(a, b) { return b.time - a.time; });
 
-    /* --- CENTER: Doctor Queue --- */
-    if (qQueue.length > 0) {
-        var cur = qQueue[0];
-        vosCurrentId = cur.id;
-        document.getElementById('vosCurrentName').innerHTML = '<span class="vos-name-link" onclick="loadFullData(\'' + cur.id + '\');switchMainTab(\'patient\');">' + escapeHtml(cur.name) + '</span>';
-        document.getElementById('vosStatusPrompt').innerText = 'Doctor is ready for';
+    /* --- CENTER: Show "In Clinic" patient first, else next waiting --- */
+    var currentPt = inClinic.length > 0 ? inClinic[0] : (qQueue.length > 0 ? qQueue[0] : null);
+    
+    if (currentPt) {
+        vosCurrentId = currentPt.id;
+        var promptText = inClinic.length > 0 ? 'Now with the doctor' : 'Doctor is ready for';
+        document.getElementById('vosCurrentName').innerHTML = '<span class="vos-name-link" onclick="loadFullData(\'' + currentPt.id + '\');switchMainTab(\'patient\');">' + escapeHtml(currentPt.name) + '</span>';
+        document.getElementById('vosStatusPrompt').innerText = promptText;
         document.getElementById('vosFinishBtn').style.display = 'inline-flex';
 
-        if (qQueue.length > 1) {
+        if (qQueue.length > 0) {
             document.getElementById('vosUpcomingBox').style.visibility = 'visible';
-            document.getElementById('vosUpcomingName').innerHTML = '<span class="vos-upcoming-link" onclick="loadFullData(\'' + qQueue[1].id + '\');switchMainTab(\'patient\');">' + escapeHtml(qQueue[1].name) + '</span>';
-            var extra = qQueue.length - 2;
-            document.getElementById('vosQCount').style.display = (extra > 0) ? 'block' : 'none';
-            document.getElementById('vosQCount').innerText = '+ ' + extra + ' more in lobby';
+            var nextIdx = (inClinic.length > 0) ? 0 : 1;
+            if (qQueue[nextIdx]) {
+                document.getElementById('vosUpcomingName').innerHTML = '<span class="vos-upcoming-link" onclick="loadFullData(\'' + qQueue[nextIdx].id + '\');switchMainTab(\'patient\');">' + escapeHtml(qQueue[nextIdx].name) + '</span>';
+                var extra = qQueue.length - nextIdx - 1;
+                document.getElementById('vosQCount').style.display = (extra > 0) ? 'block' : 'none';
+                document.getElementById('vosQCount').innerText = '+ ' + extra + ' more in lobby';
+            }
         } else {
             document.getElementById('vosUpcomingBox').style.visibility = 'hidden';
         }
@@ -4156,6 +4249,12 @@ function _renderVisionOSDisplay() {
 
     /* ---------- Per-patient file ---------- */
     function renderMonjaroPatientFile(id) {
+         // Preserve unsaved notes if user is actively typing
+    var existingNotesEl = document.getElementById('mjNotes');
+    if (existingNotesEl && mjViewingId === id && document.activeElement === existingNotesEl) {
+        // Delay re-render until user blurs
+        return;
+    }
         mjViewingId = id;
         var panel = document.getElementById('subMonjaro');
         if (!panel) return;
@@ -4245,10 +4344,18 @@ function _renderVisionOSDisplay() {
             '<button onclick="showMJPatientView(\'' + id + '\')" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:white;border:none;border-radius:12px;padding:8px 20px;font-size:13px;font-weight:800;cursor:pointer;width:auto;box-shadow:0 4px 16px rgba(167,139,250,0.4);letter-spacing:0.02em;margin-left:auto;">&#127919; Patient View</button>' +
             '</div>';
 
-        panel.innerHTML =
+                panel.innerHTML =
             mgmtBar +
             protocolHint +
             summaryBar +
+            // 🆕 CLINICAL NOTES SECTION (allergy, contraindications, etc.)
+            '<div class="mj-section-hdr">📝 Clinical Notes (Allergies / Contraindications)</div>' +
+            '<div class="section-block" style="border-left:4px solid var(--monjaro);background:rgba(167,139,250,0.04);">' +
+                '<textarea id="mjNotes" placeholder="e.g. Allergy to penicillin, history of pancreatitis, GI side effects on previous dose..." ' +
+                'style="min-height:90px;resize:vertical;border:1px solid rgba(167,139,250,0.2);background:rgba(0,0,0,0.15);" ' +
+                'oninput="autoSyncMJNotes()">' + escapeHtml(m.notes || '') + '</textarea>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;text-align:right;">💾 Auto-saves to cloud</div>' +
+            '</div>' +
             '<div class="mj-grid-2">' +
                 '<div>' +
                     bmiHtml +
@@ -4312,6 +4419,16 @@ function _renderVisionOSDisplay() {
         if (document.getElementById('mjReminderFlag')) document.getElementById('mjReminderFlag').checked = false;
         setTimeout(function() { refreshMonjaroSubTab(id); }, 700);
     }
+
+    var mjNotesTimer = null;
+function autoSyncMJNotes() {
+    clearTimeout(mjNotesTimer);
+    mjNotesTimer = setTimeout(function() {
+        if (!mjViewingId) return;
+        var notes = document.getElementById('mjNotes').value;
+        db.ref('monjaro_patients/' + mjViewingId + '/notes').set(notes).catch(handleFirebaseError);
+    }, 1500);
+}
 
     function unenrollMJPatient(id, ptName) {
         if (!confirm('Remove ' + ptName + ' from the Monjaro program? All dose history will be deleted.')) return;
@@ -4447,8 +4564,10 @@ function _renderVisionOSDisplay() {
                 '<div class="mj-dose-header">' +
                 '<span class="mj-dose-number">Dose #' + d.doseNumber + '</span>' +
                 '<span class="mj-dose-badge" style="background:' + col.bg + ';font-size:11px;padding:3px 10px;border-radius:14px;">' + doseStr + ' mg</span>' +
-                '<span style="font-size:12px;color:var(--text-secondary);">' + escapeHtml(d.date || '') + '</span>' +
+                '<span style="font-size:13px;color:var(--text-primary);font-weight:600;">📅 ' + escapeHtml(d.date || '') + '</span>' +
                 (d.weight ? '<span style="font-size:13px;font-weight:700;color:var(--text-primary);">&#9878;&#65039; ' + d.weight + ' kg</span>' : '') +
+(d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128089; ' + d.waist + ' cm</span>' : '') +
+                (d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128089; ' + d.waist + ' cm</span>' : '') +
                 deltaHtml +
                 (d.reminderFlag ? '<span class="mj-reminder-flag">&#128276;</span>' : '') +
                 '<button onclick="deleteMJDose(\'' + mjViewingId + '\',' + realIdx + ')" style="margin-left:auto;background:rgba(255,69,58,0.1);color:var(--danger);border:none;padding:4px 9px;border-radius:8px;font-size:11px;cursor:pointer;width:auto;box-shadow:none;">&times;</button>' +
@@ -4481,8 +4600,11 @@ function _renderVisionOSDisplay() {
                 var td = tierDoses[k];
                 rowsHtml += '<div class="mj-tier-row">' +
                     '<span>#' + td.doseNumber + ' &nbsp;' + escapeHtml(td.date || '') + '</span>' +
-                    '<span>' + (td.weight ? '&#9878; ' + td.weight + ' kg' : '--') + '</span>' +
-                    (td.note ? '<span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:11px;">' + escapeHtml(td.note) + '</span>' : '<span></span>') +
+                    '<span style="display:flex;gap:8px;align-items:center;">' +
+    '<span>' + (td.weight ? '&#9878; ' + td.weight + ' kg' : '--') + '</span>' +
+    '<span style="color:var(--lab);">' + (td.waist ? '&#128089; ' + td.waist + ' cm' : '') + '</span>' +
+'</span>' +
+'<span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:11px;">' + escapeHtml(td.note || '') + '</span>' +
                     '</div>';
             }
             html += '<div class="mj-tier-accordion">' +
