@@ -1577,8 +1577,22 @@
             renderWebRequests();
         });
 
-                db.ref('patientIndex').on('value', function(snap) {
+                       db.ref('patientIndex').on('value', function(snap) {
             ptIdx = snap.val() || {};
+            
+            // 🆕 CLEANUP: Clear waiting/inclinic statuses from previous days
+            if (!window._clinicCleaned) {
+                window._clinicCleaned = true;
+                var todayStr = new Date().toLocaleDateString('en-GB');
+                var cleanIds = Object.keys(ptIdx);
+                for (var ci = 0; ci < cleanIds.length; ci++) {
+                    var cp = ptIdx[cleanIds[ci]];
+                    if ((cp.clinicStatus === 'inclinic' || cp.clinicStatus === 'seentoday' || cp.isWaiting) && cp.lastVisit !== todayStr) {
+                        db.ref('patientIndex/' + cleanIds[ci]).update({ clinicStatus: null, isWaiting: false }).catch(handleFirebaseError);
+                    }
+                }
+            }
+
             renderList();
             renderLabQueue();
             scheduleCalendarRender();
@@ -1586,8 +1600,6 @@
             if (currentRegTab === 'followup') renderFollowUpPanel();
             if (currentMainTab === 'waiting') {
                 renderVisionOSDisplay();
-                // 🆕 DON'T reset screensaver timer! Just update the stats live.
-                // This stops the black screen glitch when patients change status.
                 if (ssVisible && typeof updateSSStats === 'function') updateSSStats();
             }
         });
@@ -1945,12 +1957,16 @@
             });
         }
     }
-        // Mark current patient as "in clinic"
+               // Mark current patient as "in clinic"
     if (ptIdx[id] && ptIdx[id].clinicStatus !== 'inclinic') {
         db.ref('patientIndex/' + id).update({
             clinicStatus: 'inclinic',
-            isWaiting: false  // No longer in the lobby queue
+            isWaiting: false,
+            queueTime: Date.now()  // 🆕 Set timestamp so display picks this patient first
         }).catch(handleFirebaseError);
+    } else if (ptIdx[id] && ptIdx[id].clinicStatus === 'inclinic') {
+        // If already in clinic, just update the timestamp so they jump to the front of the display
+        db.ref('patientIndex/' + id).update({ queueTime: Date.now() }).catch(handleFirebaseError);
     }
     
         document.querySelectorAll('.pt-item').forEach(function(el) { el.classList.remove('active'); });
@@ -3657,12 +3673,14 @@ function _renderVisionOSDisplay() {
         } else if (p.hasPendingLab === true) {
             lQueue.push({ id: id, name: pName, time: pTime });
         } else if (p.clinicStatus === 'seentoday') {
-            sQueue.push({ id: id, name: pName, time: pTime });
-        } else {
+            // 🆕 ONLY put in Seen Today if they were actually seen today!
             var lvTs = parseIraqiDate(p.lastVisit);
+            if (lvTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs });
+        } else {
+            var lvTs2 = parseIraqiDate(p.lastVisit);
             var daTs = parseIraqiDate(p.dateAdded);
-            if (lvTs >= todayTs || daTs >= todayTs) {
-                sQueue.push({ id: id, name: pName, time: lvTs });
+            if (lvTs2 >= todayTs || daTs >= todayTs) {
+                sQueue.push({ id: id, name: pName, time: lvTs2 });
             }
         }
     }
@@ -3670,6 +3688,7 @@ function _renderVisionOSDisplay() {
     qQueue.sort(function(a, b) { return a.time - b.time; });
     lQueue.sort(function(a, b) { return a.time - b.time; });
     sQueue.sort(function(a, b) { return b.time - a.time; });
+    inClinic.sort(function(a, b) { return b.time - a.time; }); // Sort In Clinic by most recent
 
     /* --- CENTER: Show "In Clinic" patient first, else next waiting --- */
     var currentPt = inClinic.length > 0 ? inClinic[0] : (qQueue.length > 0 ? qQueue[0] : null);
@@ -3919,7 +3938,7 @@ function _renderVisionOSDisplay() {
         }
     }
 
-    function updateSSStats() {
+        function updateSSStats() {
         var todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         var todayTs = todayStart.getTime();
@@ -3939,17 +3958,20 @@ function _renderVisionOSDisplay() {
             } else if (p.hasPendingLab === true) {
                 lQueue.push({ id: id, name: pName, time: pTime });
             } else if (p.clinicStatus === 'seentoday') {
-                sQueue.push({ id: id, name: pName, time: pTime });
-            } else {
+                // 🆕 ONLY put in Seen Today if they were actually seen today!
                 var lvTs = parseIraqiDate(p.lastVisit);
+                if (lvTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs });
+            } else {
+                var lvTs2 = parseIraqiDate(p.lastVisit);
                 var daTs = parseIraqiDate(p.dateAdded);
-                if (lvTs >= todayTs || daTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs });
+                if (lvTs2 >= todayTs || daTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs2 });
             }
         }
         
         qQueue.sort(function(a, b) { return a.time - b.time; });
         lQueue.sort(function(a, b) { return a.time - b.time; });
         sQueue.sort(function(a, b) { return b.time - a.time; });
+        inClinic.sort(function(a, b) { return b.time - a.time; }); // 🆕 Sort In Clinic by most recent
 
         // In clinic patient takes priority for "Doctor is seeing"
         var currentPt = inClinic.length > 0 ? inClinic[0] : (qQueue.length > 0 ? qQueue[0] : null);
