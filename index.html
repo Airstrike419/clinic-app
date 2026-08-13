@@ -1685,14 +1685,18 @@
             var waitingPts = [];
             var allIds = Object.keys(ptIdx);
             for (var w = 0; w < allIds.length; w++) {
-                if (ptIdx[allIds[w]].isWaiting) {
+                            var waitingPts = [];
+            var allIds = Object.keys(ptIdx);
+            for (var w = 0; w < allIds.length; w++) {
+                // 🆕 Include patients who are currently in the clinic
+                if (ptIdx[allIds[w]].isWaiting || ptIdx[allIds[w]].clinicStatus === 'inclinic') {
                     var alreadyShown = false;
                     for (var ta = 0; ta < todayAppointments.length; ta++) { if (todayAppointments[ta].id === allIds[w]) { alreadyShown = true; break; } }
                     if (!alreadyShown) waitingPts.push({ id: allIds[w], name: ptIdx[allIds[w]].name, complaint: ptIdx[allIds[w]].complaint || '' });
                 }
             }
-            if (waitingPts.length > 0) {
-                html += '<div class="followup-section-label">\u23F3 Currently Waiting (' + waitingPts.length + ')</div>';
+                        if (waitingPts.length > 0) {
+                html += '<div class="followup-section-label">\u23F3 Active / In Clinic (' + waitingPts.length + ')</div>';
                 for (var cw = 0; cw < waitingPts.length; cw++) html += buildCheckInItem(waitingPts[cw].id, waitingPts[cw].name, waitingPts[cw].complaint, '', true, 'is-waiting');
             }
             var recentPts = [];
@@ -1944,8 +1948,8 @@
             });
         }
     }
-    // Mark current patient as "in clinic"
-    if (ptIdx[id] && (ptIdx[id].isWaiting || !ptIdx[id].clinicStatus || ptIdx[id].clinicStatus === 'waiting')) {
+        // Mark current patient as "in clinic"
+    if (ptIdx[id] && ptIdx[id].clinicStatus !== 'inclinic') {
         db.ref('patientIndex/' + id).update({
             clinicStatus: 'inclinic',
             isWaiting: false  // No longer in the lobby queue
@@ -2543,10 +2547,15 @@
         else if (selYear && selYear !== curYear) dateQuery = '/' + selYear;
 
         list.innerHTML = '';
-        var sortedIds = Object.keys(ptIdx).sort(function(a, b) {
+                var sortedIds = Object.keys(ptIdx).sort(function(a, b) {
             var pA = ptIdx[a], pB = ptIdx[b];
             if ((pA.pinned ? 1 : 0) !== (pB.pinned ? 1 : 0)) return (pB.pinned ? 1 : 0) - (pA.pinned ? 1 : 0);
-            if ((pA.isWaiting ? 1 : 0) !== (pB.isWaiting ? 1 : 0)) return (pB.isWaiting ? 1 : 0) - (pA.isWaiting ? 1 : 0);
+            
+            // 🆕 Keep BOTH "In Clinic" and "Waiting" patients at the top
+            var aActive = (pA.isWaiting || pA.clinicStatus === 'inclinic') ? 1 : 0;
+            var bActive = (pB.isWaiting || pB.clinicStatus === 'inclinic') ? 1 : 0;
+            if (aActive !== bActive) return bActive - aActive;
+
             return parseIraqiDate(pB.lastVisit || pB.dateAdded) - parseIraqiDate(pA.lastVisit || pA.dateAdded);
         });
 
@@ -2569,12 +2578,14 @@
                 list.innerHTML += '<div id="pt-' + id + '" class="pt-item' + isActive + '" onclick="loadFullData(\'' + id + '\')">' +
                     '<strong>' + escapeHtml(p.name || 'Unnamed Patient') + '</strong>' +
                     mjBadge +
+                    (p.clinicStatus === 'inclinic' ? ' <span style="background:var(--success);color:white;padding:2px 6px;border-radius:8px;font-size:10px;margin-left:4px;">IN CLINIC</span>' : '') +
                     (p.isWaiting ? ' <span style="background:var(--primary);color:white;padding:2px 6px;border-radius:8px;font-size:10px;margin-left:4px;">WAITING</span>' : '') +
                     (p.hasPendingLab ? ' &#129514;' : '') + alertBadge +
                     '<span class="pt-meta">Reg: ' + escapeHtml(p.dateAdded) + ' &nbsp;|&nbsp; Last: ' + escapeHtml(lastVisit) + '</span>' +
                     '<div class="pt-controls"><span class="btn-pin-pt ' + pinClass + '" onclick="event.stopPropagation();togglePin(\'' + id + '\',' + !!p.pinned + ')">' + pinIcon + '</span>' +
                     '<span class="btn-del-pt" onclick="event.stopPropagation();deletePt(\'' + id + '\')">&#10005;</span></div></div>';
             }
+        }
         }
 
         var waitingCount = 0;
