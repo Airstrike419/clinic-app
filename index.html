@@ -1699,7 +1699,7 @@
             var recentPts = [];
             for (var r2 = 0; r2 < allIds.length; r2++) {
                 var p = ptIdx[allIds[r2]];
-                if (p.isWaiting) continue;
+                if (p.isWaiting || p.clinicStatus === 'inclinic') continue;  // 🆕 SKIP In Clinic patients
                 var lastV = p.lastVisit || p.dateAdded;
                 var days = getDaysSince(lastV);
                 if (days >= 0 && days <= 14) recentPts.push({ id: allIds[r2], name: p.name, complaint: p.complaint || '', days: days, lastVisit: lastV });
@@ -4002,7 +4002,7 @@ function _renderVisionOSDisplay() {
                 labListEl.innerHTML = lHtml;
             }
         }
-    }}
+    }
 
     /* ================================================================
        MONJARO JAVASCRIPT ENGINE
