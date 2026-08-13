@@ -1950,12 +1950,7 @@
             isWaiting: false  // No longer in the lobby queue
         }).catch(handleFirebaseError);
     }
-        /* Opening a DIFFERENT file means the previous patient has left the room.
-           Take him out of the "with doctor" queue; the display will then show him
-           under Labs Waiting or Seen depending on whether he has a pending lab. */
-        if (previousId && previousId !== id) {
-            db.ref('patientIndex/' + previousId).update({ isWaiting: false }).catch(handleFirebaseError);
-        }
+    
         document.querySelectorAll('.pt-item').forEach(function(el) { el.classList.remove('active'); });
         var ptEl = document.getElementById('pt-' + id);
         if (ptEl) ptEl.classList.add('active');
@@ -3209,7 +3204,6 @@ function saveAll(manual, targetId) {
     clearTimeout(ssTimer);
     if (ssVisible) dismissScreensaver();
     ssTimer = setTimeout(showScreensaver, SS_DELAY);
-}
         } else if (tab === 'monjaro') {
             if (monjaro) monjaro.style.display = 'block';
             renderMonjaroDashboard();
@@ -4567,7 +4561,6 @@ function autoSyncMJNotes() {
                 '<span style="font-size:13px;color:var(--text-primary);font-weight:600;">📅 ' + escapeHtml(d.date || '') + '</span>' +
                 (d.weight ? '<span style="font-size:13px;font-weight:700;color:var(--text-primary);">&#9878;&#65039; ' + d.weight + ' kg</span>' : '') +
 (d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128089; ' + d.waist + ' cm</span>' : '') +
-                (d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128089; ' + d.waist + ' cm</span>' : '') +
                 deltaHtml +
                 (d.reminderFlag ? '<span class="mj-reminder-flag">&#128276;</span>' : '') +
                 '<button onclick="deleteMJDose(\'' + mjViewingId + '\',' + realIdx + ')" style="margin-left:auto;background:rgba(255,69,58,0.1);color:var(--danger);border:none;padding:4px 9px;border-radius:8px;font-size:11px;cursor:pointer;width:auto;box-shadow:none;">&times;</button>' +
