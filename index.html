@@ -3924,39 +3924,48 @@ function _renderVisionOSDisplay() {
         todayStart.setHours(0, 0, 0, 0);
         var todayTs = todayStart.getTime();
 
-        var qQueue = [], lQueue = [], sQueue = [];
+        var qQueue = [], lQueue = [], sQueue = [], inClinic = [];
         var ids = Object.keys(ptIdx);
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
             var p = ptIdx[id];
             var pName = p.name || '';
             var pTime = p.queueTime || 0;
-            if (p.isWaiting) {
+
+            if (p.clinicStatus === 'inclinic') {
+                inClinic.push({ id: id, name: pName, time: pTime });
+            } else if (p.clinicStatus === 'waiting' || p.isWaiting) {
                 qQueue.push({ id: id, name: pName, time: pTime });
             } else if (p.hasPendingLab === true) {
                 lQueue.push({ id: id, name: pName, time: pTime });
+            } else if (p.clinicStatus === 'seentoday') {
+                sQueue.push({ id: id, name: pName, time: pTime });
             } else {
                 var lvTs = parseIraqiDate(p.lastVisit);
                 var daTs = parseIraqiDate(p.dateAdded);
                 if (lvTs >= todayTs || daTs >= todayTs) sQueue.push({ id: id, name: pName, time: lvTs });
             }
         }
+        
         qQueue.sort(function(a, b) { return a.time - b.time; });
         lQueue.sort(function(a, b) { return a.time - b.time; });
         sQueue.sort(function(a, b) { return b.time - a.time; });
 
+        // In clinic patient takes priority for "Doctor is seeing"
+        var currentPt = inClinic.length > 0 ? inClinic[0] : (qQueue.length > 0 ? qQueue[0] : null);
+        var restOfQueue = inClinic.length > 0 ? qQueue : qQueue.slice(1);
+
         var curWrap = document.getElementById('ssCurrentWrap');
         var curName = document.getElementById('ssCurrentName');
-        if (qQueue.length > 0) {
+        if (currentPt) {
             curWrap.classList.add('ss-has-patient');
-            curName.textContent = qQueue[0].name;
+            curName.textContent = currentPt.name;
         } else {
             curWrap.classList.remove('ss-has-patient');
         }
 
         var waitingCountEl = document.getElementById('ssWaitingCount');
         var waitingListEl = document.getElementById('ssWaitingList');
-        var restOfQueue = qQueue.slice(1);
         if (waitingCountEl) waitingCountEl.textContent = restOfQueue.length;
         if (waitingListEl) {
             if (restOfQueue.length === 0) {
@@ -3993,7 +4002,7 @@ function _renderVisionOSDisplay() {
                 labListEl.innerHTML = lHtml;
             }
         }
-    }
+    }}
 
     /* ================================================================
        MONJARO JAVASCRIPT ENGINE
