@@ -1577,19 +1577,20 @@
             renderWebRequests();
         });
 
-        db.ref('patientIndex').on('value', function(snap) {
-    ptIdx = snap.val() || {};
-    renderList();
-    renderLabQueue();
-    scheduleCalendarRender();
-    document.getElementById('totalPtCount').innerText = Object.keys(ptIdx).length + " Patients";
-    if (currentRegTab === 'followup') renderFollowUpPanel();
-    if (currentMainTab === 'waiting') {
-        renderVisionOSDisplay();
-        // 🆕 Don't reset screensaver timer on every ptIdx change — only update the stats
-        if (ssVisible && typeof updateSSStats === 'function') updateSSStats();
-    }
-});
+                db.ref('patientIndex').on('value', function(snap) {
+            ptIdx = snap.val() || {};
+            renderList();
+            renderLabQueue();
+            scheduleCalendarRender();
+            document.getElementById('totalPtCount').innerText = Object.keys(ptIdx).length + " Patients";
+            if (currentRegTab === 'followup') renderFollowUpPanel();
+            if (currentMainTab === 'waiting') {
+                renderVisionOSDisplay();
+                // 🆕 DON'T reset screensaver timer! Just update the stats live.
+                // This stops the black screen glitch when patients change status.
+                if (ssVisible && typeof updateSSStats === 'function') updateSSStats();
+            }
+        });
 
         db.ref('reminders').on('value', function(snap) {
             allReminders = snap.val() || {};
@@ -3188,29 +3189,16 @@ function saveAll(manual, targetId) {
             renderCalendarFromDB();
             clearTimeout(ssTimer);
             if (typeof dismissScreensaver === 'function') dismissScreensaver();
-        } else if (tab === 'waiting') {
-    appHeader.style.display = 'none';
-    tabBar.style.display = 'none';
-    if (exitBtn) exitBtn.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    
-    // 🆕 SHOW the display panel
-    waiting.classList.add('active-display');
-    waiting.style.display = 'flex';
-    startVosClock();
-    renderVisionOSDisplay();  // Force initial render
-    
-    // 🆕 DON'T show screensaver immediately — only after idle
-    clearTimeout(ssTimer);
-    if (ssVisible) dismissScreensaver();
-    ssTimer = setTimeout(showScreensaver, SS_DELAY);
-        } else if (tab === 'monjaro') {
-            if (monjaro) monjaro.style.display = 'block';
-            renderMonjaroDashboard();
-            renderMJRemindersTab();
+                } else if (tab === 'waiting') {
+            appHeader.style.display = 'none';
+            tabBar.style.display = 'none';
+            if (exitBtn) exitBtn.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            // 🆕 SHOW the widget screensaver IMMEDIATELY
             clearTimeout(ssTimer);
-            if (typeof dismissScreensaver === 'function') dismissScreensaver();
-        }
+            showScreensaver();
+        } 
     }
 
     /* ================================================================
