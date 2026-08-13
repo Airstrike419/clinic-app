@@ -1685,9 +1685,6 @@
             var waitingPts = [];
             var allIds = Object.keys(ptIdx);
             for (var w = 0; w < allIds.length; w++) {
-                            var waitingPts = [];
-            var allIds = Object.keys(ptIdx);
-            for (var w = 0; w < allIds.length; w++) {
                 // 🆕 Include patients who are currently in the clinic
                 if (ptIdx[allIds[w]].isWaiting || ptIdx[allIds[w]].clinicStatus === 'inclinic') {
                     var alreadyShown = false;
@@ -2586,7 +2583,6 @@
                     '<span class="btn-del-pt" onclick="event.stopPropagation();deletePt(\'' + id + '\')">&#10005;</span></div></div>';
             }
         }
-        }
 
         var waitingCount = 0;
         var allIds2 = Object.keys(ptIdx);
@@ -3209,7 +3205,13 @@ function saveAll(manual, targetId) {
             // 🆕 SHOW the widget screensaver IMMEDIATELY
             clearTimeout(ssTimer);
             showScreensaver();
-        } 
+        } else if (tab === 'monjaro') {
+            if (monjaro) monjaro.style.display = 'block';
+            renderMonjaroDashboard();
+            renderMJRemindersTab();
+            clearTimeout(ssTimer);
+            if (typeof dismissScreensaver === 'function') dismissScreensaver();
+        }
     }
 
     /* ================================================================
