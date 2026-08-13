@@ -4559,7 +4559,7 @@ function autoSyncMJNotes() {
                 '<span class="mj-dose-badge" style="background:' + col.bg + ';font-size:11px;padding:3px 10px;border-radius:14px;">' + doseStr + ' mg</span>' +
                 '<span style="font-size:13px;color:var(--text-primary);font-weight:600;">📅 ' + escapeHtml(d.date || '') + '</span>' +
                 (d.weight ? '<span style="font-size:13px;font-weight:700;color:var(--text-primary);">&#9878;&#65039; ' + d.weight + ' kg</span>' : '') +
-(d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128089; ' + d.waist + ' cm</span>' : '') +
+(d.waist ? '<span style="font-size:13px;font-weight:700;color:var(--lab);">&#128207; ' + d.waist + ' cm</span>' : '') +
                 deltaHtml +
                 (d.reminderFlag ? '<span class="mj-reminder-flag">&#128276;</span>' : '') +
                 '<button onclick="deleteMJDose(\'' + mjViewingId + '\',' + realIdx + ')" style="margin-left:auto;background:rgba(255,69,58,0.1);color:var(--danger);border:none;padding:4px 9px;border-radius:8px;font-size:11px;cursor:pointer;width:auto;box-shadow:none;">&times;</button>' +
@@ -4594,7 +4594,7 @@ function autoSyncMJNotes() {
                     '<span>#' + td.doseNumber + ' &nbsp;' + escapeHtml(td.date || '') + '</span>' +
                     '<span style="display:flex;gap:8px;align-items:center;">' +
     '<span>' + (td.weight ? '&#9878; ' + td.weight + ' kg' : '--') + '</span>' +
-    '<span style="color:var(--lab);">' + (td.waist ? '&#128089; ' + td.waist + ' cm' : '') + '</span>' +
+    '<span style="color:var(--lab);">' + (td.waist ? '&#128207; ' + td.waist + ' cm' : '') + '</span>' +
 '</span>' +
 '<span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:11px;">' + escapeHtml(td.note || '') + '</span>' +
                     '</div>';
@@ -4869,7 +4869,7 @@ function autoSyncMJNotes() {
             mjStatCard('% Lost', lostPct + '%', '#a78bfa', '&#128200;') +
             mjStatCard('Current Weight', currentW ? currentW + ' kg' : '—', '#64D2FF', '&#9878;') +
             mjStatCard('To Goal', toGoKg + ' kg', '#FF9F0A', '&#127937;') +
-            (lostWaist ? mjStatCard('Waist &#9660;', lostWaist + ' cm', '#30D158', '&#128089;') : '') +
+            (lostWaist ? mjStatCard('Waist &#128207;', lostWaist + ' cm', '#30D158', '&#128207;') : '') +
             '</div>' +
 
             /* Goal ring + charts row */
@@ -4894,7 +4894,7 @@ function autoSyncMJNotes() {
             /* Waist chart (if data) */
             (waistPoints.length > 1 ?
             '<div style="margin-bottom:32px;">' +
-            '<div style="font-size:11px;font-weight:700;color:rgba(100,210,255,0.7);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">&#128089; Waist Circumference (cm)</div>' +
+            '<div style="font-size:11px;font-weight:700;color:rgba(100,210,255,0.7);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">&#128207; Waist Circumference (cm)</div>' +
             buildMJChartSVG(waistPoints, '#64D2FF', '#0A84FF', 'cm') +
             '</div>' : '') +
 
